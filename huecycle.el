@@ -62,7 +62,6 @@
         (random-color-hue-range (plist-get rest :random-color-hue-range))
         (random-color-saturation-range (plist-get rest :random-color-saturation-range))
         (random-color-luminance-range (plist-get rest :random-color-luminance-range)))
-    (print start-color))
   (huecycle--interp-datum-create
    :face face
    :spec spec
@@ -73,7 +72,7 @@
    :step-multiple (if step-multiple step-multiple 1.0)
    :random-color-hue-range (if random-color-hue-range random-color-hue-range '(0.0 1.0))
    :random-color-saturation-range (if random-color-saturation-range random-color-saturation-range '(0.5 1.0))
-   :random-color-luminance-range (if random-color-luminance-range random-color-luminance-range '(0.2 0.3))))
+   :random-color-luminance-range (if random-color-luminance-range random-color-luminance-range '(0.2 0.3)))))
 
 (defun huecycle--hex-to-rgb (hex)
   "Converts hex string (2 digits per component) to rgb tuple"
@@ -119,11 +118,11 @@
   (let (
         (hue-range (huecycle--interp-datum-random-color-hue-range interp-datum))
         (sat-range (huecycle--interp-datum-random-color-saturation-range interp-datum))
-        (lum-range (huecycle--interp-datum-random-color-luminance-range interp-datum))))
+        (lum-range (huecycle--interp-datum-random-color-luminance-range interp-datum)))
   (huecycle--color-create
    :hue (huecycle--get-random-float-from (nth 0 hue-range) (nth 1 hue-range))
    :saturation (huecycle--get-random-float-from (nth 0 sat-range) (nth 1 sat-range))
-   :luminance (huecycle--get-random-float-from (nth 0 lum-range) (nth 1 lum-range))))
+   :luminance (huecycle--get-random-float-from (nth 0 lum-range) (nth 1 lum-range)))))
 
 (defun huecycle--get-random-float-from (lower upper)
   "Gets random float from in range [lower, upper].
@@ -200,7 +199,7 @@
 
 
 (defun huecycle--reset-faces (interp-datum)
-  (let ()
+  (let
        (cookies (huecycle--interp-datum-cookies interp-datum))
     (dolist (cookie cookies)
       (face-remap-remove-relative cookie))
