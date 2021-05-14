@@ -11,12 +11,15 @@
 
 * Description
 # A summary of what this module does.
-Emacs package that lets faces change color when idle:
-
-+ Include a brief list of feature highlights here
+An Emacs package that lets faces change color when idle:
 
 * Features
 # An in-depth list of features, how to use them, and their dependencies.
+First, define what faces will be affected:
+#+BEGIN_SRC elisp
+
+#+END_SRC
+Calling =huecycle= will
 
 * Configuration
 # How to configure this module, including common problems and how to address them.

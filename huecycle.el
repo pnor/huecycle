@@ -8,12 +8,14 @@
 
 ;; TODO document all functions
 ;; TODO checkdoc this file
-;; TODO config to disable revertion when moving cursor (? maybe)
-;; TODO deefcustom
-;; TODO change cookies to non-list, since we will never generate more than one per interp-datum
-;; TODO fix bug where colors don't revert immediately
-;; - thread priority issue?
-;; - tied to the idle clock
+;; TODO readme
+;; TODO add config to not revert colors when moviing
+;; - and should start lerping from where it left off
+;; - stoer this as "local" lerping state
+;; TODO link some face color transitions together
+;; - common hashing?
+;; - return to multiple faces in one config and rework starting color
+;; TODO defcustom
 ;; clean up codes
 
 (eval-when-compile (require 'cl-lib))
