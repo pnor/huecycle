@@ -298,7 +298,7 @@ End colors become start colors, and the new end colors are determined by `huecyc
   (let* ((end-colors (huecycle--interp-datum-end-colors interp-datum))
          (faces (huecycle--interp-datum-faces interp-datum))
          (next-color-func (huecycle--interp-datum-next-color-func interp-datum))
-         (next-colors-list (mapcar next-color-func (make-list (length faces) interp-datum))))
+         (next-colors-list (make-list (length end-colors) (funcall next-color-func interp-datum))))
     (setf (huecycle--interp-datum-start-colors interp-datum) end-colors)
     (setf (huecycle--interp-datum-end-colors interp-datum) next-colors-list)))
 
