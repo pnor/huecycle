@@ -12,9 +12,10 @@
 ;; TODO add config to not revert colors when moviing
 ;; - and should start lerping from where it left off
 ;; - stoer this as "local" lerping state
-;; TODO link some face color transitions together
+;; DONE link some face color transitions together
 ;; - common hashing?
 ;; - return to multiple faces in one config and rework starting color
+;; TODO allow same group to mix foreground and background
 ;; TODO defcustom
 ;; clean up codes
 
@@ -43,9 +44,9 @@
   (faces nil :documentation "Affected faces")
   (spec nil :documentation "Spec of face that is affected (should be `foreground', `background',
                                  `distant-foreground', or `distant-background')")
-  (default-start-color nil :documentation "Start color to use over the faces spec")
-  (start-colors '() :documentation "Start colors interpolated")
-  (end-colors '() :documentation "End colors interpolated")
+  (default-start-color nil :documentation "Start color to use over the faces spec, as `huecycle--color'")
+  (start-colors '() :documentation "Start colors interpolated, as `huecycle--color'")
+  (end-colors '() :documentation "End colors interpolate, as `huecycle--color'd")
   (progress 0.0 :documentation "Current interpolation progress")
   (interp-func #'huecycle-interpolate-linear :documentation "Function used to interpolate values")
   (next-color-func #'huecycle-get-random-hsl-color :documentation "Function used to determine next color")
@@ -90,7 +91,7 @@ REST are (KEYWORD VALUE) where KEYWORDs include:
    :faces (if (listp faces) faces (list faces))
    :spec spec
    :interp-func (if interp-func interp-func #'huecycle-interpolate-linear)
-   :default-start-color start-color
+   :default-start-color (if start-color (huecycle--hex-to-hsl-color start-color) nil)
    :next-color-func (if next-color-func next-color-func #'huecycle-get-random-hsl-color)
    :color-list (if color-list (mapcar #'huecycle--hex-to-hsl-color color-list) '())
    :step-multiple (if step-multiple step-multiple 1.0)
