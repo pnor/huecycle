@@ -15,6 +15,8 @@
 ;; DONE link some face color transitions together
 ;; - common hashing?
 ;; - return to multiple faces in one config and rework starting color
+;; TODO make groups work by having multiple (spec . (list of affected faces))
+;; - or just list of lists (spec (faces)), and iterate over each to apply color
 ;; TODO allow same group to mix foreground and background
 ;; TODO defcustom
 ;; clean up codes
@@ -46,7 +48,7 @@
                                  `distant-foreground', or `distant-background')")
   (default-start-color nil :documentation "Start color to use over the faces spec, as `huecycle--color'")
   (start-colors '() :documentation "Start colors interpolated, as `huecycle--color'")
-  (end-colors '() :documentation "End colors interpolate, as `huecycle--color'd")
+  (end-colors '() :documentation "End colors interpolate, as `huecycle--color'")
   (progress 0.0 :documentation "Current interpolation progress")
   (interp-func #'huecycle-interpolate-linear :documentation "Function used to interpolate values")
   (next-color-func #'huecycle-get-random-hsl-color :documentation "Function used to determine next color")
@@ -78,8 +80,7 @@ REST are (KEYWORD VALUE) where KEYWORDs include:
 - `:random-color-luminance-range': range luminance values are randomly chosen from (by `next-color-func'). Is a list
 - of 2 elements where first <= second (default: (0.2 0.3))."
   (huecycle--init-interp-datum-verify-args faces spec)
-  (let (
-        (interp-func (plist-get rest :interp-func))
+  (let ((interp-func (plist-get rest :interp-func))
         (next-color-func (plist-get rest :next-color-func))
         (start-color (plist-get rest :start-color))
         (color-list (plist-get rest :color-list))
@@ -139,27 +140,6 @@ REST are (KEYWORD VALUE) where KEYWORDs include:
     (pcase hsl
       (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
       (`(,_) error "Could not parse color"))))
-
-;; (defun huecycle--get-start-color (interp-datum)
-;;   "Return the current background color of the hl-line as `huecycle--color'"
-;;   (let* (
-;;          (face (huecycle--interp-datum-face interp-datum))
-;;          (spec (huecycle--interp-datum-spec interp-datum))
-;;          (start-color (huecycle--interp-datum-default-start-color interp-datum))
-;;          (attribute
-;;           (cond
-;;            (start-color start-color)
-;;            ((eq spec 'foreground) (face-attribute face :foreground))
-;;            ((eq spec 'background) (face-attribute face :background))
-;;            ((eq spec 'distant-foreground) (face-attribute face :distant-foreground))
-;;            ((eq spec 'distant-background) (face-attribute face :distant-background))
-;;            (t 'unspecified)))
-;;          (attribute-color (if (eq attribute 'unspecified) huecycle--default-start-color attribute))
-;;          (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-color))))
-;;     (pcase hsl
-;;       (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
-;;       (`(,_) error "Could not parse color"))))
-
 
 (defun huecycle-get-random-hsl-color (interp-datum)
   "Return random `huecycle--color' using ranges from INTERP-DATUM."
