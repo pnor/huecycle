@@ -304,12 +304,13 @@ End colors become start colors, and the new end colors are determined by `huecyc
   (let* ((end-colors-alist (huecycle--interp-datum-end-colors-alist interp-datum))
          (next-color-func (huecycle--interp-datum-next-color-func interp-datum))
          (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
+         (next-color (funcall next-color-func interp-datum))
          (next-colors-alist
           (cl-loop for (spec . faces) in spec-faces-alist
                    collect `(,spec .
                                    ,(make-list
                                      (length (cdr (assoc spec end-colors-alist)))
-                                     (funcall next-color-func interp-datum))))))
+                                     next-color)))))
     (setf (huecycle--interp-datum-start-colors-alist interp-datum) end-colors-alist)
     (setf (huecycle--interp-datum-end-colors-alist interp-datum) next-colors-alist)))
 
@@ -321,7 +322,6 @@ End colors become start colors, and the new end colors are determined by `huecyc
     (mapc #'huecycle--init-colors huecycle--interpolate-data)
     (while (not (input-pending-p))
       (sit-for huecycle-step-size)
-      (print huecycle--interpolate-data)
       (dolist (datum huecycle--interpolate-data)
         (huecycle--update-progress huecycle-step-size datum)
         (huecycle--reset-faces datum)
