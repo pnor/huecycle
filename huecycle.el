@@ -88,9 +88,10 @@ REST are (KEYWORD VALUE) where KEYWORDs include:
         (random-color-saturation-range (plist-get rest :random-color-saturation-range))
         (random-color-luminance-range (plist-get rest :random-color-luminance-range)))
   (huecycle--interp-datum-create
-   :spec-faces-alist (mapcar
-                     (lambda (spec-faces) (huecycle--verify-spec-faces spec-faces))
-                     spec-faces-alist)
+   :spec-faces-alist (let ((verified-spec-faces (mapcar
+                                                 (lambda (spec-faces) (huecycle--verify-spec-faces spec-faces))
+                                                 spec-faces-alist)))
+                       (huecycle--fix-spec-faces-faces-to-list verified-spec-faces))
    :interp-func (if interp-func interp-func #'huecycle-interpolate-linear)
    :default-start-color (if start-color (huecycle--hex-to-hsl-color start-color) nil)
    :next-color-func (if next-color-func next-color-func #'huecycle-get-random-hsl-color)
@@ -99,6 +100,11 @@ REST are (KEYWORD VALUE) where KEYWORDs include:
    :random-color-hue-range (if random-color-hue-range random-color-hue-range '(0.0 1.0))
    :random-color-saturation-range (if random-color-saturation-range random-color-saturation-range '(0.5 1.0))
    :random-color-luminance-range (if random-color-luminance-range random-color-luminance-range '(0.2 0.3)))))
+
+(defun huecycle--fix-spec-faces-faces-to-list (spec-faces-alist)
+  "Converts all elements of SPEC-FACES-ALIST so `cdr' returns a list of faces"
+  (cl-loop for (spec . faces) in spec-faces-alist collect
+           (if (listp faces) `(,spec . ,faces) `(,spec . ,(list faces)))))
 
 (defun huecycle--verify-spec-faces (spec-faces)
   "Asserts input, SPEC-FACES, of `huecycle--init-interp-datum' is valid. Returns spec-faces, unchanged, or fails
@@ -262,18 +268,6 @@ START and END are `huecycle--color'."
     (face-spec-recalc face (selected-frame))
     cookie))
 
-;; TODO refactor using macro to make shorter (remove the cond)
-;; (defmacro huecycle--face-remap-add (face spec color)
-;;   "Helper to target proper SPEC when using `face-remap-add-relative' with FACE and COLOR"
-;;   (let ((keyword (cond
-;;                   ((eq 'background spec) :background)
-;;                   ((eq 'foreground spec) :foreground)
-;;                   ((eq 'distant-background spec) :distant-background)
-;;                   ((eq 'distant-foreground spec) :distant-foreground))))
-;;   `(face-remap-add-relative ,face ,keyword ,color)))
-;;
-;; (macroexpand '(huecycle--face-remap-add foreground 'background "#a"))
-
 (defun huecycle--init-colors (interp-datum)
   "Initialize/Reset INTERP-DATUM by setting start and end colors.
 Must be called before anhy other operations on the INTERP-DATUM."
@@ -281,19 +275,15 @@ Must be called before anhy other operations on the INTERP-DATUM."
         (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
         (default-start-color (huecycle--interp-datum-default-start-color interp-datum))
         (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
-        ;; (start-colors-list
-        ;;  (if default-start-color
-        ;;      (make-list (length faces) default-start-color)
-        ;;      (mapcar (lambda (face-spec) (apply #'huecycle--get-start-color face-spec)) faces-spec-list)))
         (start-colors-alist
          (cl-loop for (spec . faces) in spec-faces-alist
                   collect (if default-start-color
                       `(,spec . ,(make-list (length faces) default-start-color))
                     `(,spec . ,(mapcar (lambda (face) (huecycle--get-start-color face spec)) faces)))))
-        ;; (next-colors-list (mapcar next-color-func (make-list (length faces) interp-datum))))
         (next-colors-alist
-         (cl-loop for (spec . faces) in spec-faces-alist
-                  collect `(,spec . ,(mapcar next-color-func (make-list (length faces) interp-datum))))))
+         (let ((next-color (funcall next-color-func interp-datum)))
+           (cl-loop for (spec . faces) in spec-faces-alist
+                    collect `(,spec . ,(make-list (length faces) next-color))))))
     (setf (huecycle--interp-datum-start-colors-alist interp-datum) start-colors-alist)
     (setf (huecycle--interp-datum-end-colors-alist interp-datum) next-colors-alist)
     (setf (huecycle--interp-datum-progress interp-datum) 0.0)))
