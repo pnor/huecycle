@@ -6,8 +6,8 @@
 
 ;;; Code:
 
-;; TODO document all functions
-;; TODO checkdoc this file
+;; DONE document all functions
+;; DONE checkdoc this file
 ;; TODO readme
 ;; TODO add config to not revert colors when moviing
 ;; - and should start lerping from where it left off
@@ -15,9 +15,9 @@
 ;; DONE link some face color transitions together
 ;; - common hashing?
 ;; - return to multiple faces in one config and rework starting color
-;; TODO make groups work by having multiple (spec . (list of affected faces))
+;; DONE make groups work by having multiple (spec . (list of affected faces))
 ;; - or just list of lists (spec (faces)), and iterate over each to apply color
-;; TODO allow same group to mix foreground and background
+;; DONE allow same group to mix foreground and background
 ;; TODO stop after set amount of time; a timeout (save power/CPU cycles)
 ;; TODO defcustom
 ;; clean up codes
@@ -335,16 +335,31 @@ End colors become start colors, and the new end colors are determined by `huecyc
   (if (>= secs 0)
       (setq huecycle--idle-timer (run-with-idle-timer secs t 'huecycle))))
 
-;; TODO change this so you can list faces easily like so:
-;;
-;; (huecycle-set-faces
-;;  (foreground (hl-line default))
-;;  (background (hl-line default))
-;;  :speed 1.0)
-;;  - should use keywordp prolly
-(defmacro huecycle-set-faces (&rest faces)
-  "Helper function to specify which FACES should huecycle."
-  `(setq huecycle--interpolate-data (mapcar (apply-partially #'apply #'huecycle--init-interp-datum) ',faces)))
+(defmacro huecycle-set-faces (&rest spec-faces-configs)
+  "Helper function to specify convert the SPEC-FACES-CONFIG to a format that can easily be passed to `huecycle--init-interp-datum'."
+  (let ((temp-func (make-symbol "conversion-function")))
+  `(let ((,temp-func
+     (lambda (config) (apply #'huecycle--init-interp-datum (huecycle--convert-config-to-init-args config)))))
+         (setq huecycle--interpolate-data (mapcar ,temp-func ',spec-faces-configs)))))
+
+(defun huecycle--convert-config-to-init-args (spec-faces-config)
+  "Convert SPEC-FACES-CONFIG to a form that can be passed to `huecycle--init-interp-datum'.
+For example, given a list:
+( (foreground . default) (background . highlight) :speed 10.0 )
+Will convert the beginning to an alist, then retain rest of the keyword value arguments:
+( ((foreground . default) (background . highlight)) :speed 10.0 )"
+  (let ((alist '()) (rest-args '()) (building-alist t))
+    (cl-loop for item in spec-faces-config do
+             (if building-alist
+                 (if (listp item)
+                     (push item alist)
+                   (progn
+                     (setq building-alist nil)
+                     (push item rest-args)))
+               (push item rest-args)))
+    (setq rest-args (nreverse rest-args))
+    (push alist rest-args)
+    rest-args))
 
 (provide 'huecycle)
 
