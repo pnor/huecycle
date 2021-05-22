@@ -18,7 +18,7 @@
 ;; DONE make groups work by having multiple (spec . (list of affected faces))
 ;; - or just list of lists (spec (faces)), and iterate over each to apply color
 ;; DONE allow same group to mix foreground and background
-;; TODO stop after set amount of time; a timeout (save power/CPU cycles)
+;; DONE stop after set amount of time; a timeout (save power/CPU cycles)
 ;; TODO defcustom
 ;; clean up codes
 
@@ -205,8 +205,8 @@ LOWER and UPPER should be in range [0.0, 1.0]"
   (max (min value high) low))
 
 (defun huecycle-interpolate-linear (progress start end)
-  "Return new color that is the result of interplating the colors of START and END linearly.
-PROFRESS is a float in the range [0, 1], but providing a value outside of that will extrapolate new values.
+  "Return `huecycle--color' that is the result of interplating the `huecycle-color's START and END linearly.
+PROGRESS is a float in the range [0, 1], but providing a value outside of that will extrapolate new values.
 START and END are `huecycle--color'."
   (let ((new-hue
          (huecycle--clamp
@@ -218,6 +218,13 @@ START and END are `huecycle--color'."
          (huecycle--clamp
           (+ (* (- 1 progress) (huecycle--color-luminance start)) (* progress (huecycle--color-luminance end))) 0 1)))
     (huecycle--color-create :hue new-hue :saturation new-sat :luminance new-lum)))
+
+(defun huecycle-interpolate-step (progress start end)
+  "Return `huecycle--color' that is result of interpolating `huecycle-color's START and END with a step function.
+If PROGRESS < 0.5, returns START, else returns END."
+  (if (< progress 0.5) start end))
+
+;; (defun huecycle-interpolate-)
 
 (defun huecycle--hsl-color-to-hex (hsl-color)
   "Convert HSL-COLOR, a `huecycle--color', to hex string with 2 digits for each component."
