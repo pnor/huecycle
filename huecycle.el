@@ -27,11 +27,17 @@
 (defvar huecycle-step-size 0.033333
   "Interval of time between color updates.")
 
+(defvar huecycle-cycle-duration 0
+  "How long to huecycle for before stopping. Any value <= 0 is treated as infinity.")
+
 (defvar huecycle--interpolate-data '()
   "List of `huecycle-interpolate-datum'.")
 
 (defvar huecycle--idle-timer nil
   "Idle timer used to start huecycle.")
+
+(defvar huecycle--current-time 0
+  "How long huecycle has been cycling for.")
 
 (defvar huecycle--default-start-color "#888888"
   "Start color to use if a face has none, and no color is specified.")
@@ -274,7 +280,6 @@ Must be called before anhy other operations on the INTERP-DATUM."
   (let* ((next-color-func (huecycle--interp-datum-next-color-func interp-datum))
         (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
         (default-start-color (huecycle--interp-datum-default-start-color interp-datum))
-        (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
         (start-colors-alist
          (cl-loop for (spec . faces) in spec-faces-alist
                   collect (if default-start-color
@@ -310,13 +315,20 @@ End colors become start colors, and the new end colors are determined by `huecyc
   (interactive)
   (when huecycle--interpolate-data
     (mapc #'huecycle--init-colors huecycle--interpolate-data)
-    (while (not (input-pending-p))
+    (while (and (not (input-pending-p)) (not (huecycle--time-elapsed)))
       (sit-for huecycle-step-size)
+      (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size))
       (dolist (datum huecycle--interpolate-data)
         (huecycle--update-progress huecycle-step-size datum)
         (huecycle--reset-faces datum)
         (huecycle--set-all-faces datum)))
+    (setq huecycle--current-time 0)
     (mapc #'huecycle--reset-faces huecycle--interpolate-data)))
+
+(defun huecycle--time-elapsed ()
+  "Return t if huecycle has ran for more than `huecycle-cycle-duration' secs.
+Always returns nil if `huecycle-cycle-duration' is <= 0."
+  (and (> huecycle-cycle-duration 0) (> huecycle--current-time huecycle-cycle-duration)))
 
 ;;;###autoload
 (defun huecycle-stop-idle ()
@@ -335,18 +347,27 @@ End colors become start colors, and the new end colors are determined by `huecyc
   (if (>= secs 0)
       (setq huecycle--idle-timer (run-with-idle-timer secs t 'huecycle))))
 
+(defun huecycle-set-cycle-duration (secs)
+  "Specify how many SECS faces should huecycle for.
+If secs >= 0, will huecycle for an infinite amount of time."
+  (interactive "nHow long to huecycle for (seconds): ")
+  (setq huecycle-cycle-duration secs))
+
 (defmacro huecycle-set-faces (&rest spec-faces-configs)
-  "Helper function to specify convert the SPEC-FACES-CONFIG to a format that can easily be passed to `huecycle--init-interp-datum'."
+  "Helper function to convert SPEC-FACES-CONFIGS to format that can be mapped with `huecycle--init-interp-datum'."
   (let ((temp-func (make-symbol "conversion-function")))
   `(let ((,temp-func
      (lambda (config) (apply #'huecycle--init-interp-datum (huecycle--convert-config-to-init-args config)))))
          (setq huecycle--interpolate-data (mapcar ,temp-func ',spec-faces-configs)))))
 
 (defun huecycle--convert-config-to-init-args (spec-faces-config)
-  "Convert SPEC-FACES-CONFIG to a form that can be passed to `huecycle--init-interp-datum'.
+  "Convert SPEC-FACES-CONFIG to a form that can be applied to `huecycle--init-interp-datum'.
 For example, given a list:
+
 ( (foreground . default) (background . highlight) :speed 10.0 )
+
 Will convert the beginning to an alist, then retain rest of the keyword value arguments:
+
 ( ((foreground . default) (background . highlight)) :speed 10.0 )"
   (let ((alist '()) (rest-args '()) (building-alist t))
     (cl-loop for item in spec-faces-config do
