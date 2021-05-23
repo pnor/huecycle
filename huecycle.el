@@ -8,6 +8,10 @@
 
 ;; TODO readme
 
+;; TODOs
+;; DONE minor mode
+;; TODO fix bug with persist and buffer swaps
+
 (eval-when-compile (require 'cl-lib))
 
 (defgroup huecycle ()
@@ -36,6 +40,15 @@
 
 (defvar huecycle--default-start-color "#888888"
   "Start color to use if a face has none, and no color is specified.")
+
+(defvar-local huecycle-mode nil
+  "Is nil ")
+(define-minor-mode huecycle-mode
+  "Toggle Huecycle mode.
+When Huecycle mode is enabled, faces specified by `huecycle--interpolate-data' will change color. The mode is
+disabled after `huecycle-cycle-duration' secs have elapsed or the user has inputs something."
+  :lighter " Huecycle"
+  nil)
 
 (cl-defstruct (huecycle--color (:constructor huecycle--color-create)
                                (:copier nil))
@@ -327,6 +340,7 @@ End colors become start colors, and the new end colors are determined by `huecyc
   "Start huecycling faces."
   (interactive)
   (when huecycle--interpolate-data
+    (huecycle-mode 1)
     (mapc #'huecycle--init-colors huecycle--interpolate-data)
     (while (and (not (input-pending-p)) (not (huecycle--time-elapsed)))
       (sit-for huecycle-step-size)
@@ -336,7 +350,8 @@ End colors become start colors, and the new end colors are determined by `huecyc
         (huecycle--reset-faces datum)
         (huecycle--set-all-faces datum)))
     (setq huecycle--current-time 0)
-    (huecycle--cleanup)))
+    (huecycle--cleanup)
+    (huecycle-mode 0)))
 
 (defun huecycle--cleanup ()
   "Clean up after huecylcing by resetting faces, respecting whether persist is set."
