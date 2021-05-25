@@ -14,6 +14,7 @@
 ;; DONE incorporate maximum mappings amount
 ;; DONE reset all changes on all buffers
 ;; DONE set faces command needs to invalidate everything for updates to happen
+;; DONE fix duplicate entries ib `huecycle--active-buffers'
 ;; TODO clean up the resetting faces and invalidating, since right now the interface be messy
 ;; TODO proper testing, this is getting big
 ;; (set-buffer)
@@ -390,11 +391,11 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
 
 (defun huecycle--buffer-has-active-data ()
   "Return t if current buffer has active interpolation data."
-  (if huecycle--buffer-data t nil))
+  (and huecycle--buffer-data (member (current-buffer) huecycle--active-buffers)))
 
 (defun huecycle--initialize-buffer-data ()
   "Initialize buffer with interpolation data, if it isn't already initialized."
-  (if (not (member (current-buffer) huecycle--active-buffers))
+  (if (not (huecycle--buffer-has-active-data))
       (progn
         (setq huecycle--buffer-data (mapcar #'huecycle--copy-interp-datum huecycle--interpolate-data))
         (huecycle--add-buffer (current-buffer)))))
@@ -402,16 +403,18 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
 (defun huecycle--update-recently-used-buffer (buffer)
   "Update BUFFER so it is the most recently used in `huecycle--active-buffers'.
 buffer most already be in `huecycle--active-buffers'."
-  (let* ((old-length (length huecycle--active-buffers))
-         (new-length (length (delq buffer huecycle--active-buffers))))
+  (let* ((new-active-buffers (delq buffer huecycle--active-buffers))
+         (old-length (length huecycle--active-buffers))
+         (new-length (length new-active-buffers)))
     (if (= old-length new-length)
         (error "%s is not in huecycle--active-buffers!" buffer)
-      (push buffer huecycle--active-buffers))))
+      (push buffer new-active-buffers))))
 
 (defun huecycle--add-buffer (buffer)
   "Add BUFFER to `huecycle--active-buffers'.
 If the length of `huecycle--active-buffers' exceeds `huecycle--max-active-buffers', then a buffer is evicted."
   (push buffer huecycle--active-buffers)
+  (message "(%s) bufs: %s" (length huecycle--active-buffers) huecycle--active-buffers)
   (if (length> huecycle--active-buffers huecycle--max-active-buffers)
       (huecycle--evict-buffers)))
 
@@ -432,7 +435,6 @@ Also handles deleting of the `huecycle--buffer-data' for the deleted buffer."
 
 (defun huecycle--erase-buffer-data (buffer)
   "Erase interpolation data for BUFFER."
-  (message (format "DEBUG: erasing %s" buffer))
   (if (buffer-live-p buffer)
       (with-current-buffer buffer
         (kill-local-variable 'huecycle--buffer-data))))
@@ -480,8 +482,10 @@ If secs >= 0, will huecycle for an infinite amount of time."
   (mapc #'huecycle--reset-all-faces-for-buffer huecycle--active-buffers))
 
 (defun huecycle--erase-all-buffer-data ()
-  "Erase all `huecycle--buffer-data' for all buffers in `huecycle--active-buffers'."
-  (mapc #'huecycle--erase-buffer-data huecycle--active-buffers))
+  "Erase all `huecycle--buffer-data' for all buffers in `huecycle--active-buffers'.
+Erases all buffer data and clears `huecycle--active-buffers'."
+  (mapc #'huecycle--erase-buffer-data huecycle--active-buffers)
+  (setq huecycle--active-buffers '()))
 
 (defmacro huecycle-set-faces (&rest spec-faces-configs)
   "Set which spec-face groups should huecycle.
@@ -539,7 +543,6 @@ of 2 elements where first <= second (default: (0.2 0.3)).
             (lambda (config) (apply #'huecycle--init-interp-datum (huecycle--convert-config-to-init-args config)))))
        (huecycle-reset-all-faces-on-all-buffers)
        (huecycle--erase-all-buffer-data)
-       (setq huecycle--active-buffers '())
        (setq huecycle--interpolate-data (mapcar ,temp-func ',spec-faces-configs)))))
 
 (defun huecycle--convert-config-to-init-args (spec-faces-config)
