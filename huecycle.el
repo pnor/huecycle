@@ -9,18 +9,10 @@
 ;; TODO readme
 
 ;; TODOs
-;; DONE minor mode
-;; DONE fix bug with persist and buffer swaps
-;; DONE incorporate maximum mappings amount
-;; DONE reset all changes on all buffers
-;; DONE set faces command needs to invalidate everything for updates to happen
-;; DONE fix duplicate entries ib `huecycle--active-buffers'
-;; TODO clean up the resetting faces and invalidating, since right now the interface be messy
 ;; TODO proper testing, this is getting big
-;; (set-buffer)
-;; (with-current-buffer) even better
+;; TODO clean up the resetting faces and invalidating, since right now the interface be messy
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
 
 (defgroup huecycle ()
   "Idle color animation for faces."
@@ -358,21 +350,37 @@ End colors become start colors, and the new end colors are determined by `huecyc
   "Start huecycling faces."
   (interactive)
   (when huecycle--interpolate-data
-    (huecycle-mode 1)
-    (huecycle--update-buffer-data)
-    (mapc #'huecycle--init-colors huecycle--buffer-data)
-    (while (and (not (input-pending-p)) (not (huecycle--time-elapsed)))
+    (huecycle--setup)
+    (while (and (not (huecycle--input-pending)) (not (huecycle--time-elapsed)))
       (sit-for huecycle-step-size)
-      (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size))
-      (dolist (datum huecycle--buffer-data)
-        (huecycle--update-progress huecycle-step-size datum)
-        (huecycle--reset-faces datum)
-        (huecycle--set-all-faces datum)))
-    (setq huecycle--current-time 0)
-    (huecycle--cleanup)
-    (huecycle-mode 0)))
+      (huecycle--lerp-colors))
+    (huecycle--tear-down)))
 
-(defun huecycle--cleanup ()
+(defun huecycle--setup ()
+  "Setup variables and data for `huecycle--lerp-colors'."
+  (huecycle-mode 1)
+  (huecycle--update-buffer-data)
+  (mapc #'huecycle--init-colors huecycle--buffer-data))
+
+(defun huecycle--lerp-colors ()
+  "Change face appearence for huecycle."
+  (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size))
+  (dolist (datum huecycle--buffer-data)
+    (huecycle--update-progress huecycle-step-size datum)
+    (huecycle--reset-faces datum)
+    (huecycle--set-all-faces datum)))
+
+(defun huecycle--tear-down ()
+  "Clean up data after huecycle."
+  (setq huecycle--current-time 0)
+  (huecycle--cleanup-faces)
+  (huecycle-mode 0))
+
+(defun huecycle--input-pending ()
+  "Wrapper around `input-pending-p', to be changed for testing purposes."
+  (input-pending-p))
+
+(defun huecycle--cleanup-faces ()
   "Clean up by resetting faces, respecting whether persist is t or nil."
   (dolist (interp-datum huecycle--buffer-data)
     (if (not (huecycle--interp-datum-persist interp-datum))
@@ -414,9 +422,9 @@ buffer most already be in `huecycle--active-buffers'."
   "Add BUFFER to `huecycle--active-buffers'.
 If the length of `huecycle--active-buffers' exceeds `huecycle--max-active-buffers', then a buffer is evicted."
   (push buffer huecycle--active-buffers)
-  (message "(%s) bufs: %s" (length huecycle--active-buffers) huecycle--active-buffers)
   (if (length> huecycle--active-buffers huecycle--max-active-buffers)
-      (huecycle--evict-buffers)))
+      (huecycle--evict-buffers))
+  (message "(%s) bufs: %s" (length huecycle--active-buffers) huecycle--active-buffers))
 
 (defun huecycle--evict-buffers ()
   "Remove buffers from `huecycle--active-buffers' until its size is less than `huecycle--max-active-buffers'.
