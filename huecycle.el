@@ -68,7 +68,7 @@ disabled after `huecycle-cycle-duration' secs have elapsed or the user has input
   "Struct holds all data and state for one color-interpolating face."
   (spec-faces-alist '() :documentation "Association list of spec-faces pairs. Key is the SPEC that affects
                                  which aspect of the face will change. Value is a list of the faces affected. Spec
-                                 should be `foreground', `background', `distant-foreground', or `distant-background'")
+                                 should be `foreground', `background', or `distant-foreground'")
   (default-start-color nil :documentation "Start color to use over the faces spec, as `huecycle--color'")
   (start-colors-alist '() :documentation "alist of interpolated start colors. Key is spec and value is list of `huecycle--color'.")
   (end-colors-alist '() :documentation "alist of interpolated end colors. Key is spec and value is list of `huecycle--color'.")
@@ -87,9 +87,8 @@ disabled after `huecycle-cycle-duration' secs have elapsed or the user has input
 (defun huecycle--init-interp-datum (spec-faces-alist &rest rest)
   "Helper function to create an `huecycle--interp-datum'.
 Create an `huecycle--interp-datum' for the group specified by SPEC-FACES-ALIST. Each item in SPEC-FACES-ALIST should
-have a spec as the key (should be `foreground', `background', `distant-foreground', or
-`distant-background') and the value is either a singular face or list of affected faces.
-REST are (KEYWORD VALUE) where KEYWORDs include:
+have a spec as the key (should be `foreground', `background', or `distant-foreground') and the value is either a
+ singular face or list of affected faces. REST are (KEYWORD VALUE) where KEYWORDs include:
 - `:interp-func': Interpolation function (default: `huecycle-interpolate-linear').
 - `:next-color-func': Function used to determine the next color to interpolate towards (default:
 `huecycle-get-random-hsl-color').
@@ -140,7 +139,7 @@ assertion if input is invalid."
     (cond
      ((listp faces) (dolist (face faces) (cl-assert (facep face) "FACE in faces isn't a valid face")))
      (t (cl-assert (facep faces) "FACES isn't valid face")))
-    (cl-assert (or (eq spec 'foreground) (eq spec 'background) (eq spec 'distant-foreground) (eq spec 'distant-background))
+    (cl-assert (or (eq spec 'foreground) (eq spec 'background) (eq spec 'distant-foreground))
                "spec needs to refer to a color"))
   spec-faces)
 
@@ -169,7 +168,6 @@ assertion if input is invalid."
            ((eq spec 'foreground) (face-attribute face :foreground))
            ((eq spec 'background) (face-attribute face :background))
            ((eq spec 'distant-foreground) (face-attribute face :distant-foreground))
-           ((eq spec 'distant-background) (face-attribute face :distant-background))
            (t 'unspecified)))
          (attribute-color (if (eq attribute 'unspecified) huecycle--default-start-color attribute))
          (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-color))))
@@ -300,7 +298,6 @@ Uses FACE's SPEC using INTERP-FUNC to interpolate START-COLOR and END-COLOR at P
   (let* ((new-color (huecycle--hsl-color-to-hex (funcall interp-func progress start-color end-color)))
          (cookie (cond ((eq 'background spec) (face-remap-add-relative face :background new-color))
                        ((eq 'foreground spec) (face-remap-add-relative face :foreground new-color))
-                       ((eq 'distant-background spec) (face-remap-add-relative face :distant-background new-color))
                        ((eq 'distant-foreground spec) (face-remap-add-relative face :distant-foreground new-color)))))
     (face-spec-recalc face (selected-frame))
     cookie))
