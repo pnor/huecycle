@@ -93,7 +93,9 @@ have a spec as the key (should be `foreground', `background', or `distant-foregr
 - `:next-color-func': Function used to determine the next color to interpolate towards (default:
 `huecycle-get-random-hsl-color').
 - `:start-color': Color all faces will start with (overrides current spec color) (default: nil).
-- `:color-list': List of `huecycle--color', used by `:next-color-func' (default: Empty list).
+- `:color-list': List of `huecycle--color', used by `:next-color-func'.
+Should be passed in as hex strings, as this function maps them to `huecycle--color'
+(default: Empty list).
 - `:speed': Speed of interpolation (default: 1.0).
 - `:random-color-hue-range': range hue values are randomly chosen from (by `next-color-func'). Is a list of 2
 elements where first <= second (default: (0.0 1.0)).
