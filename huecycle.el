@@ -205,11 +205,11 @@ LOWER and UPPER should be in range [0.0, 1.0]"
   "Get the next color from INTERP-DATUM's color list."
   (let ((color-list (huecycle--interp-datum-color-list interp-datum))
         (color-list-index (huecycle--interp-datum-color-list-index interp-datum)))
-    (if (= (length color-list) 0)
-       nil
-      (setf (huecycle--interp-datum-color-list-index interp-datum)
-            (mod (1+ color-list-index) (length color-list)))
-      (nth (huecycle--interp-datum-color-list-index interp-datum) color-list))))
+    (unless (= (length color-list) 0)
+      (let ((next-color (nth (huecycle--interp-datum-color-list-index interp-datum) color-list)))
+        (setf (huecycle--interp-datum-color-list-index interp-datum)
+              (mod (1+ color-list-index) (length color-list)))
+        next-color))))
 
 (defun huecycle-get-random-color-from-list (interp-datum)
   "Get random color from INTERP-DATUM's color list."
@@ -422,8 +422,7 @@ buffer most already be in `huecycle--active-buffers'."
 If the length of `huecycle--active-buffers' exceeds `huecycle--max-active-buffers', then a buffer is evicted."
   (push buffer huecycle--active-buffers)
   (if (length> huecycle--active-buffers huecycle--max-active-buffers)
-      (huecycle--evict-buffers))
-  (message "(%s) bufs: %s" (length huecycle--active-buffers) huecycle--active-buffers))
+      (huecycle--evict-buffers)))
 
 (defun huecycle--evict-buffers ()
   "Remove buffers from `huecycle--active-buffers' until its size is less than `huecycle--max-active-buffers'.
