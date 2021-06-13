@@ -51,14 +51,8 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
     (seq-some (lambda (item) (if (and (listp item) (equalp spec (nth 0 item))) (nth 1 item)))
               remaps)))
 
-;; Generaly huecycle should
-;; - update progress correctly
-;; - set faces correctly
-;; - cleanup properly
-;; TODO huecycle-set-faces sets correctly
-;; - maps input call to list of interp datum correctly
+;; ===== T E S T S ====================================================================================
 
-;; ---------- General
 (ert-deftest huecycle-test-huecycle-runs ()
   "Test that huecycle runs without errors."
    (huecycle-with-test-env
@@ -153,7 +147,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
    :huecycle-iterations 3))
 
 (ert-deftest huecycle-uses-next-colors ()
-  "Test huecycle interpolate toward next color"
+  "Test huecycle interpolate toward next color."
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -161,13 +155,75 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
    :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
                                        `((((foreground . default))
                                           :persist t
+                                          :interp-func huecycle-interpolate-step
                                           :next-color-func huecycle-get-next-list-color
-                                          :color-list ("#ffffff" "#ff0000")
-                                          )))
-   :huecycle-step-size 1.0
-   :huecycle-step-size 1.0
-   :huecycle-iterations 1))
+                                          :color-list ("#ffffff" "#ff0000"))))
+   :huecycle-step-size 0.25
+   :huecycle-iterations 3))
 
+(ert-deftest huecycle-uses-next-colors-2 ()
+  "Test huecycle interpolate toward next color."
+  (huecycle-with-test-env
+   (progn
+     (huecycle)
+     (should (equalp "#000004" (huecycle-get-face-color :background 'default))))
+   :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+                                       `((((background . default))
+                                          :persist t
+                                          :interp-func huecycle-interpolate-step
+                                          :next-color-func huecycle-get-next-list-color
+                                          :color-list ("#000001" "#000002" "#000003" "#000004"))))
+   :huecycle-step-size 0.25
+   :huecycle-iterations 22))
 
+(ert-deftest huecycle-uses-next-colors-3 ()
+  "Test huecycle interpolate toward next color."
+  (huecycle-with-test-env
+   (progn
+     (huecycle)
+     (should (equalp "#000004" (huecycle-get-face-color :background 'default)))
+     (should (equalp "#000004" (huecycle-get-face-color :foreground 'default))))
+   :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+                                       `((((background . default))
+                                          :persist t
+                                          :next-color-func huecycle-get-next-list-color
+                                          :color-list ("#000001" "#000002" "#000003" "#000004"))
+                                         (((foreground . default))
+                                          :persist t
+                                          :next-color-func huecycle-get-next-list-color
+                                          :color-list ("#000001" "#000002" "#000003" "#000004"))))
+   :huecycle-step-size 0.5
+   :huecycle-iterations 7))
 
-(ert-run-tests-interactively t)
+(ert-deftest huecycle-uses-next-colors-4 ()
+  "Test huecycle interpolate toward next color."
+  (huecycle-with-test-env
+   (progn
+     (huecycle)
+     (should (equalp "#000002" (huecycle-get-face-color :background 'default))))
+   :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+                                       `((((background . default))
+                                          :persist t
+                                          :next-color-func huecycle-get-next-list-color
+                                          :color-list ("#000001" "#000002" "#000003" "#000004"))))
+   :huecycle-step-size 0.5
+   :huecycle-iterations 3))
+
+(ert-deftest huecycle-uses-random-list-colors ()
+  "Test huecycle interpolates to color in list")
+
+;; TODO fix get-next
+;; (defun sample ()
+;;   (huecycle-with-test-env
+;;    (progn
+;;      (huecycle)
+;;      (huecycle--interp-datum-color-list-index (nth 0 huecycle--buffer-data))
+;;      ;; (should (equalp "#000002" (huecycle-get-face-color :background 'default)))
+;;      )
+;;    :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+;;                                        `((((background . default))
+;;                                           :persist t
+;;                                           :next-color-func huecycle-get-next-list-color
+;;                                           :color-list ("#000001" "#000002" "#000003" "#000004"))))
+;;    :huecycle-step-size 0.5
+;;    :huecycle-iterations 1))
