@@ -7,22 +7,49 @@
 - [[#description][Description]]
 - [[#features][Features]]
 - [[#configuration][Configuration]]
-- [[#troubleshooting][Troubleshooting]]
 
 * Description
 # A summary of what this module does.
 An Emacs package that lets faces change color when idle:
+[[./images/huecycle.gif]]
 
 * Features
 # An in-depth list of features, how to use them, and their dependencies.
-First, define what faces will be affected:
+First, define what faces will be affected with =huecycle-set-faces=:
 #+BEGIN_SRC elisp
-
+(huecycle-set-faces
+ ((background . foreground)))
 #+END_SRC
-Calling =huecycle= will
+Then calling =huecycle= will then let those faces change color.
 
+You can specify multiple faces into a group, which will allow settings to take affect for all faces. Groups follow
+the form of association list entries mapping a face spec to affected faces, then options.
+#+BEGIN_SRC elisp
+(huecycle-set-faces
+ ((background . foreground)
+  (foreground . (warning highlight))
+  :speed 2.0
+  :persist t))
+#+END_SRC
+Faces in a group sync up color changes.
+
+You can have multiple groups, each with their own configurations:
+#+BEGIN_SRC elisp
+(huecycle-set-faces
+ ((background . hl-line)
+  (foreground . (line-number-current-line))
+  :random-color-hue-range (0.0 1.0)
+  :random-color-saturation-range (0.8 1.0)
+  :random-color-luminance-range (0.5 0.8))
+ ((foreground . warning)
+  :color-list ("#FF0000" "#FF0000" "#DDAAAA")
+  :next-color-func huecycle-get-next-list-color
+  :speed 5.0))
+#+END_SRC
+
+Read the documentation for =huecycle-set-faces= for all configurations
 * Configuration
 # How to configure this module, including common problems and how to address them.
+You can make Emacs huecycle when idle using =M-x huecycle-when-idle.=
 
-* Troubleshooting
-# Common issues and their solution, or places to look for help.
+You can specify how long Emacs will cycle for with =M-x huecycle-set-cycle-duration=.
