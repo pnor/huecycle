@@ -3,9 +3,8 @@
 #+SINCE:   <replace with next tagged release version>
 #+STARTUP: inlineimages nofold
 
-* =Huecycle=
 # A summary of what this module does.
-An Emacs package that lets faces change color when idle:
+Emacs package that lets faces change color when idle:
 [[./images/huecycle.gif]]
 
 * Features
