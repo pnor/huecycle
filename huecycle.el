@@ -8,10 +8,6 @@
 
 ;; TODO readme
 
-;; TODOs
-;; TODO proper testing, this is getting big
-;; TODO clean up the resetting faces and invalidating, since right now the interface be messy
-
 (require 'cl-lib)
 
 (defgroup huecycle ()
@@ -410,12 +406,12 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
 (defun huecycle--update-recently-used-buffer (buffer)
   "Update BUFFER so it is the most recently used in `huecycle--active-buffers'.
 buffer most already be in `huecycle--active-buffers'."
-  (let* ((new-active-buffers (delq buffer huecycle--active-buffers))
-         (old-length (length huecycle--active-buffers))
+  (let* ((old-length (length huecycle--active-buffers))
+         (new-active-buffers (delq buffer huecycle--active-buffers))
          (new-length (length new-active-buffers)))
     (if (= old-length new-length)
         (error "%s is not in huecycle--active-buffers!" buffer)
-      (push buffer new-active-buffers))))
+      (push buffer huecycle--active-buffers))))
 
 (defun huecycle--add-buffer (buffer)
   "Add BUFFER to `huecycle--active-buffers'.
