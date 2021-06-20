@@ -18,7 +18,15 @@ Assumes testing enviroment has defined `huecycle-counter' to track current itera
   "Function used in testing enviroments to replace `sit-for'."
   t)
 
-;; TODO appears iterations is broken
+(defun huecycle-get-face-color (spec face)
+  "Return hex string of the color of FACE based on SPEC from `face-remapping-alist'."
+  (let ((remaps
+         (seq-some
+          (lambda (remaps) (if (equal face (nth 0 remaps)) remaps))
+          face-remapping-alist)))
+    (seq-some (lambda (item) (if (and (listp item) (equal spec (nth 0 item))) (nth 1 item)))
+              remaps)))
+
 (cl-defmacro huecycle-with-test-env
     (body &key
           (huecycle-iterations 1)
@@ -52,17 +60,6 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
          (with-temp-buffer
            ,body))))
 
-(symbol-function #'sit-for)
-
-(defun huecycle-get-face-color (spec face)
-  "Return hex string of the color of FACE based on SPEC from `face-remapping-alist'."
-  (let ((remaps
-         (seq-some
-          (lambda (remaps) (if (equal face (nth 0 remaps)) remaps))
-          face-remapping-alist)))
-    (seq-some (lambda (item) (if (and (listp item) (equal spec (nth 0 item))) (nth 1 item)))
-              remaps)))
-
 ;; ===== T E S T S ====================================================================================
 
 (ert-deftest huecycle-test-huecycle-runs ()
@@ -72,33 +69,28 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
 
 (ert-deftest huecycle-cleans-up ()
   "Test huecycle cleans up after itself."
+  ;; Simple case
   (huecycle-with-test-env
    (progn
      (huecycle)
      (should (equal '() face-remapping-alist)))
-   :huecycle--interpolate-data (mapcar #'huecycle--init-interp-datum '(((foreground . default))))))
-
-(ert-deftest huecycle-cleans-up-many-iterations ()
-  "Test huecycle cleans up after itself with many iterations."
+   :huecycle--interpolate-data (mapcar #'huecycle--init-interp-datum '(((foreground . default)))))
+  ;; Many iterations
   (huecycle-with-test-env
    (progn
      (huecycle)
      (should (equal '() face-remapping-alist)))
    :huecycle--interpolate-data (mapcar #'huecycle--init-interp-datum '(((foreground . default))))
-   :huecycle-iterations 100))
-
-(ert-deftest huecycle-cleans-up-with-duration ()
-  "Test huecycle cleans up after itself when ending `huecycle-cycle-duration' is positive."
+   :huecycle-iterations 100)
+  ;; Test huecycle cleans up after itself when ending `huecycle-cycle-duration' is positive.
   (huecycle-with-test-env
    (progn
      (huecycle)
      (should (equal '() face-remapping-alist)))
    :huecycle--interpolate-data (mapcar #'huecycle--init-interp-datum '(((foreground . default))))
    :huecycle-cycle-duration 1
-   :huecycle-iterations 0))
-
-(ert-deftest huecycle-cleans-up-multiple-faces ()
-  "Test huecycle cleans up multiple faces when finishing."
+   :huecycle-iterations 0)
+  ;; Test huecycle cleans up multiple faces when finishing."
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -107,10 +99,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                        '(((foreground . default))
                                          ((background . highlight))
                                          ((distant-foreground . font-lock-string-face))))
-   :huecycle-iterations 5))
-
-(ert-deftest huecycle-cleans-up-multiple-faces-2 ()
-  "Test huecycle cleans up multiple faces when finishing."
+   :huecycle-iterations 5)
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -121,10 +110,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                          ((background . (highlight font-lock-keyword-face)))
                                          ((background . (highlight font-lock-string-face)))
                                          ((distant-foreground . font-lock-string-face))))
-   :huecycle-iterations 5))
-
-(ert-deftest huecycle-cleans-up-multiple-faces-3 ()
-  "Test huecycle cleans up multiple faces when finishing."
+   :huecycle-iterations 5)
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -135,10 +121,8 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                          ((background . (font-lock-keyword-face font-lock-builtin-face)))
                                          ((background . (highlight font-lock-warning-face font-lock-string-face)))
                                          ((distant-foreground . (font-lock-string-face default)))))
-   :huecycle-iterations 5))
-
-(ert-deftest huecycle-cleans-up-multiple-configs-clean-up ()
-  "Test huecycle cleans up properly when various configs are set."
+   :huecycle-iterations 5)
+  ;; Test huecycle cleans up properly when various configs are set.
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -146,10 +130,8 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
    :huecycle--interpolate-data (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
                                        '((((foreground . default)) :speed 2.0)
                                          (((background . highlight)) :speed 3.0 :random-color-hue-range (0 0.5))))
-   :huecycle-iterations 3))
-
-(ert-deftest huecycle-cleans-up-persist ()
-  "Test huecycle cleans up properly when persist is set."
+   :huecycle-iterations 3)
+  ;; Test huecycle cleans up properly when persist is set.
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -159,7 +141,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
    :huecycle-iterations 3))
 
 (ert-deftest huecycle-uses-next-colors ()
-  "Test huecycle interpolate toward next color."
+  "Test huecycle interpolate toward next color, and in right order."
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -171,10 +153,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                           :next-color-func huecycle-get-next-list-color
                                           :color-list ("#ffffff" "#ff0000"))))
    :huecycle-step-size 1
-   :huecycle-iterations 1))
-
-(ert-deftest huecycle-uses-next-colors-2 ()
-  "Test huecycle interpolate toward next color."
+   :huecycle-iterations 1)
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -186,10 +165,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                           :next-color-func huecycle-get-next-list-color
                                           :color-list ("#000001" "#000002" "#000003" "#000004"))))
    :huecycle-step-size 1
-   :huecycle-iterations 4))
-
-(ert-deftest huecycle-uses-next-colors-3 ()
-  "Test huecycle interpolate toward next color."
+   :huecycle-iterations 4)
   (huecycle-with-test-env
    (progn
      (huecycle)
@@ -205,10 +181,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                           :next-color-func huecycle-get-next-list-color
                                           :color-list ("#000001" "#000002" "#000003" "#000004"))))
    :huecycle-step-size 1
-   :huecycle-iterations 4))
-
-(ert-deftest huecycle-uses-next-colors-4 ()
-  "Test huecycle interpolate toward next color."
+   :huecycle-iterations 4)
   (huecycle-with-test-env
    (progn
      (huecycle)
