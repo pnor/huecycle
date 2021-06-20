@@ -17,7 +17,7 @@ First, define what faces will be affected with =huecycle-set-faces=:
 Then calling =huecycle= will then let those faces change color.
 
 You can specify multiple faces into a group, which will allow settings to take affect for all faces. Groups follow
-the form of association list entries mapping a face spec to affected faces, then options.
+the form of association list entries mapping a face spec to affected faces, followed by options.
 #+BEGIN_SRC emacs-lisp
 (huecycle-set-faces
  ((background . foreground)
@@ -41,9 +41,8 @@ You can have multiple groups, each with their own configurations:
   :speed 5.0))
 #+END_SRC
 
-Read the documentation for =huecycle-set-faces= for all possible configurations.
-* Configuration
-# How to configure this module, including common problems and how to address them.
-You can make Emacs huecycle when idle using =M-x huecycle-when-idle=.
+Read the documentation for =huecycle-set-faces= to see all the ways you control groups.
+* Usage
+You can make Emacs =huecycle= when idle using =M-x huecycle-when-idle=.
 
 You can specify how long Emacs will cycle for with =M-x huecycle-set-cycle-duration=.

@@ -8,10 +8,6 @@
 
 ;; TODO readme
 
-;; TODOs
-;; TODO proper testing, this is getting big
-;; TODO clean up the resetting faces and invalidating, since right now the interface be messy
-;; TODO change gif cuz language is a bit informal
 
 (require 'cl-lib)
 
