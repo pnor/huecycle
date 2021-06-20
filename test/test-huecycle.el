@@ -419,5 +419,4 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
            (should (equal "huecycle-test-buffer-2" (buffer-name (nth 4 huecycle--active-buffers)))))
        (mapc #'kill-buffer buffer-access-list)))
    :huecycle--interpolate-data (mapcar #'huecycle--init-interp-datum '(((foreground . default))))
-   :huecycle--max-active-buffers 5)
-  )
+   :huecycle--max-active-buffers 5))
