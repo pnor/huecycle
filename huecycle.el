@@ -1,4 +1,4 @@
-;;; huecycle --- (TODO summary)                 -*- lexical-binding: t; -*-
+;;; huecycle --- -*- lexical-binding: t; -*-
 
 ;;; Commentary:
 
