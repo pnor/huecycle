@@ -1,12 +1,21 @@
-;;; huecycle --- -*- lexical-binding: t; -*-
-
+;;; huecycle --- Idle color animation -*- lexical-binding: t; -*-
+;;
+;; Copyright (c) 2021 Phillip O'Reggio
+;;
+;; Author: Phillip O'Reggio <https://github.com/pnor>
+;; Maintainer: Phillip O'Reggio
+;; Version: 1.0.0
+;; Keywords: TODO
+;; Homepage: https://github.com/pnor/huecycle/tree/master
+;; Package-Requires: TODO
+;;
+;; This file is not part of GNU Emacs
+;;
 ;;; Commentary:
-
-;;; TODO write me
+;;
+;; `huecycle' provides idle color animation for any face, or groups of faces.
 
 ;;; Code:
-
-;; TODO readme
 
 (require 'cl-lib)
 
@@ -91,7 +100,7 @@ have a spec as the key (should be `foreground', `background', or `distant-foregr
 - `:start-color': Color all faces will start with (overrides current spec color) (default: nil).
 - `:color-list': List of `huecycle--color', used by `:next-color-func'.
 Should be passed in as hex strings, as this function maps them to `huecycle--color'
-(default: Empty list).
+\(default: Empty list).
 - `:speed': Speed of interpolation (default: 1.0).
 - `:random-color-hue-range': range hue values are randomly chosen from (by `next-color-func'). Is a list of 2
 elements where first <= second (default: (0.0 1.0)).
@@ -125,13 +134,13 @@ of 2 elements where first <= second (default: (0.2 0.3)).
    :persist (if persist persist nil))))
 
 (defun huecycle--fix-spec-faces-faces-to-list (spec-faces-alist)
-  "Converts all elements of SPEC-FACES-ALIST so `cdr' returns a list of faces"
+  "Convert all elements of SPEC-FACES-ALIST so `cdr' return list of faces."
   (cl-loop for (spec . faces) in spec-faces-alist collect
            (if (listp faces) `(,spec . ,faces) `(,spec . ,(list faces)))))
 
 (defun huecycle--verify-spec-faces (spec-faces)
-  "Asserts input, SPEC-FACES, of `huecycle--init-interp-datum' is valid. Returns spec-faces, unchanged, or fails
-assertion if input is invalid."
+  "Assert input, SPEC-FACES, of `huecycle--init-interp-datum' is valid.
+Return spec-faces unchanged, or fails assertion if input is invalid."
   (let ((spec (car spec-faces))
         (faces (cdr spec-faces)))
     (cond
@@ -494,23 +503,23 @@ Erases all buffer data and clears `huecycle--active-buffers'."
 SPEC-FACES-CONFIGS should include alist entries of (spec . faces) that determine which faces change color, and then
 addition keyword options to configure how it changes color. For example:
 
-(huecycle-set-faces ((foreground . default)))
+\(huecycle-set-faces ((foreground . default)))
 
 will make the default face's foreground change over time.
 You can add multiple faces to a spec:
 
-(huecycle-set-faces ((foreground . (default highlight))))
+\(huecycle-set-faces ((foreground . (default highlight))))
 
 Or add multiple specs to one group:
 
-(huecycle-set-faces
+\(huecycle-set-faces
  ((foreground . (default highlight))
    (background . (link region))))
 
 All faces in one group will sync up their color changes with each other.
 You can specify multiple groups, each with their own configuration options:
 
-(huecycle-set-faces
+\(huecycle-set-faces
  ((foreground . (org-document-info org-document-title))
   :color-list (\"#FF0000\" \"#00FF00\" \"#0000FF\")
   :next-color-func huecycle-get-next-list-color
@@ -551,11 +560,11 @@ of 2 elements where first <= second (default: (0.2 0.3)).
   "Convert SPEC-FACES-CONFIG to a form that can be applied to `huecycle--init-interp-datum'.
 For example, given a list:
 
-( (foreground . default) (background . highlight) :speed 10.0 )
+\( (foreground . default) (background . highlight) :speed 10.0 )
 
 Will convert the beginning to an alist, then retain rest of the keyword value arguments:
 
-( ((foreground . default) (background . highlight)) :speed 10.0 )"
+\( ((foreground . default) (background . highlight)) :speed 10.0 )"
   (let ((alist '()) (rest-args '()) (building-alist t))
     (cl-loop for item in spec-faces-config do
              (if building-alist
