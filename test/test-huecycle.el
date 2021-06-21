@@ -283,7 +283,7 @@ iterations `huecycle' does. If it is <= 0, it will loop forever."
                                           :start-color "#ff0000"
                                           :interp-func huecycle-interpolate-step
                                           :next-color-func huecycle-get-random-color-from-list
-                                          :color-list ,test-colors-list)))
+                                          :color-list ("#ffffff"))))
    :huecycle-step-size 0.2
    :huecycle-iterations 1))
 
