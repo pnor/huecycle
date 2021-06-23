@@ -5,12 +5,30 @@
 ;; Author: Phillip O'Reggio <https://github.com/pnor>
 ;; Maintainer: Phillip O'Reggio
 ;; Version: 1.0.0
-;; Keywords: TODO
+;; Package-Requires: (cl-lib)
+;; Keywords: faces
+;; Keywords: faces mode-line
 ;; Homepage: https://github.com/pnor/huecycle/tree/master
-;; Package-Requires: TODO
+
+;; This file is not part of GNU Emacs.
+
 ;;
-;; This file is not part of GNU Emacs
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or
+;; (at your option) any later version.
 ;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
+;; Floor, Boston, MA 02110-1301, USA.
+;;
+
 ;;; Commentary:
 ;;
 ;; `huecycle' provides idle color animation for any face, or groups of faces.
@@ -58,8 +76,9 @@ Buffers are arranged based on least recently used, where the first entry is most
 
 (define-minor-mode huecycle-mode
   "Toggle Huecycle mode.
-When Huecycle mode is enabled, faces specified by `huecycle--interpolate-data' will change color. The mode is
-disabled after `huecycle-cycle-duration' secs have elapsed or the user has inputs something."
+When Huecycle mode is enabled, faces specified by `huecycle--interpolate-data'
+ will change color. The mode is disabled after `huecycle-cycle-duration' secs
+ have elapsed or the user has inputted something."
   :lighter " Huecycle"
   nil)
 
@@ -91,24 +110,35 @@ disabled after `huecycle-cycle-duration' secs have elapsed or the user has input
 
 (defun huecycle--init-interp-datum (spec-faces-alist &rest rest)
   "Helper function to create an `huecycle--interp-datum'.
-Create an `huecycle--interp-datum' for the group specified by SPEC-FACES-ALIST. Each item in SPEC-FACES-ALIST should
-have a spec as the key (should be `foreground', `background', or `distant-foreground') and the value is either a
- singular face or list of affected faces. REST are (KEYWORD VALUE) where KEYWORDs include:
-- `:interp-func': Interpolation function (default: `huecycle-interpolate-linear').
-- `:next-color-func': Function used to determine the next color to interpolate towards (default:
-`huecycle-get-random-hsl-color').
-- `:start-color': Color all faces will start with (overrides current spec color) (default: nil).
-- `:color-list': List of `huecycle--color', used by `:next-color-func'.
-Should be passed in as hex strings, as this function maps them to `huecycle--color'
-\(default: Empty list).
-- `:speed': Speed of interpolation (default: 1.0).
-- `:random-color-hue-range': range hue values are randomly chosen from (by `next-color-func'). Is a list of 2
-elements where first <= second (default: (0.0 1.0)).
-- `:random-color-saturation-range': range saturation values are randomly chosen from (by `next-color-func'). Is a
-list of 2 elements where first <= second (default: (0.5 1.0)).
-- `:random-color-luminance-range': range luminance values are randomly chosen from (by `next-color-func'). Is a list
-of 2 elements where first <= second (default: (0.2 0.3)).
-- `:persist' whether the colors changed do not reset. (default: nil)"
+Create an `huecycle--interp-datum' for the group specified by SPEC-FACES-ALIST.
+Each item in SPEC-FACES-ALIST should have a spec as the key (should be
+`foreground', `background', or `distant-foreground') and the value is either a
+ singular face or list of affected faces. REST are (KEYWORD VALUE) where
+  KEYWORDs include:
+- `:interp-func': Interpolation function.
+\(default: `huecycle-interpolate-linear')
+- `:next-color-func': Function used to determine the next color to interpolate
+ towards.
+\(default: `huecycle-get-random-hsl-color')
+- `:start-color': Color all faces in group will start interpolating from,
+regardless of its color beforehand.
+\(default: nil)
+- `:color-list': List of `huecycle--color', used by `:next-color-func'. Should
+  be passed in as hex strings, as this function maps them to `huecycle--color'.
+\(default: Empty list)
+- `:speed': Speed of interpolation.
+\(default: 1.0)
+- `:random-color-hue-range': range hue values are randomly chosen from (by
+ `next-color-func'). Is a list of 2 elements where first <= second.
+\(default: (0.0 1.0))
+- `:random-color-saturation-range': range saturation values are randomly chosen
+ from (by `next-color-func'). Is a list of 2 elements where first <= second.
+\(default: (0.5 1.0))
+- `:random-color-luminance-range': range luminance values are randomly chosen
+ from (by `next-color-func'). Is a list of 2 elements where first <= second.
+\(default: (0.2 0.3))
+- `:persist' whether the colors changed do not reset.
+\(default: nil)"
   (let ((interp-func (plist-get rest :interp-func))
         (next-color-func (plist-get rest :next-color-func))
         (start-color (plist-get rest :start-color))
@@ -231,8 +261,8 @@ LOWER and UPPER should be in range [0.0, 1.0]"
 
 (defun huecycle-interpolate-linear (progress start end)
   "Interpolate `huecycle-color's START and END linearly.
-PROGRESS is a float in the range [0, 1], but providing a value outside of that will extrapolate new values.
-START and END are `huecycle--color'."
+PROGRESS is a float in the range [0, 1], but providing a value outside of that
+ will extrapolate new values. START and END are `huecycle--color'."
   (let ((new-hue
          (huecycle--clamp
           (+ (* (- 1 progress) (huecycle--color-hue start)) (* progress (huecycle--color-hue end))) 0 1))
@@ -311,8 +341,9 @@ Uses FACE's SPEC using INTERP-FUNC to interpolate START-COLOR and END-COLOR at P
 
 (defun huecycle--init-colors (interp-datum)
   "Initialize/Reset INTERP-DATUM by setting start and end colors.
-Must be called before any other operations on the INTERP-DATUM. If `interp-datum' start-colors-alist is not the
-empty list and persist is t, skips initializing it."
+Must be called before any other operations on the INTERP-DATUM. If
+`interp-datum'  start-colors-alist is not the empty list and persist is t, skips
+initializing it."
   (let* ((persist (huecycle--interp-datum-persist interp-datum))
          (before-start-colors-alist (huecycle--interp-datum-start-colors-alist interp-datum)))
     (if (and persist before-start-colors-alist)
@@ -430,8 +461,10 @@ If the length of `huecycle--active-buffers' exceeds `huecycle--max-active-buffer
       (huecycle--evict-buffers)))
 
 (defun huecycle--evict-buffers ()
-  "Remove buffers from `huecycle--active-buffers' until its size is less than `huecycle--max-active-buffers'.
-Also handles deleting of the `huecycle--buffer-data' for the deleted buffer."
+  "Evict buffers from `huecycle--active-buffers'.
+Removes buffers from `huecycle--active-buffers' until length is less than
+`huecycle--max-active-buffers'. Also handles deleting of the
+`huecycle--buffer-data' for the deleted buffer."
   (let ((counter 0)
         (new-active-buffers '()))
     (cl-loop for buf in huecycle--active-buffers do
@@ -476,32 +509,33 @@ If secs >= 0, will huecycle for an infinite amount of time."
 
 ;;;###autoload
 (defun huecycle-reset-all-faces ()
-  "Reset all changes to faces from huecycling in the current buffer."
+  "Reset faces from huecycling in the current buffer."
   (interactive)
   (huecycle--reset-all-faces-for-buffer (current-buffer)))
 
 (defun huecycle--reset-all-faces-for-buffer (buffer)
-  "Reset all changes to faces from huecyling in BUFFER."
+  "Reset faces from huecyling in BUFFER."
   (if (buffer-live-p buffer)
       (with-current-buffer buffer
         (mapc #'huecycle--reset-faces huecycle--buffer-data))))
 
 ;;;###autoload
 (defun huecycle-reset-all-faces-on-all-buffers ()
-  "Reset all changes to faces from huecycling across all buffers."
+  "Reset faces from huecycling across all buffers."
   (interactive)
   (mapc #'huecycle--reset-all-faces-for-buffer huecycle--active-buffers))
 
 (defun huecycle--erase-all-buffer-data ()
-  "Erase all `huecycle--buffer-data' for all buffers in `huecycle--active-buffers'.
+  "Erase `huecycle--buffer-data' for all buffers in `huecycle--active-buffers'.
 Erases all buffer data and clears `huecycle--active-buffers'."
   (mapc #'huecycle--erase-buffer-data huecycle--active-buffers)
   (setq huecycle--active-buffers '()))
 
 (defmacro huecycle-set-faces (&rest spec-faces-configs)
   "Set which spec-face groups should huecycle.
-SPEC-FACES-CONFIGS should include alist entries of (spec . faces) that determine which faces change color, and then
-addition keyword options to configure how it changes color. For example:
+SPEC-FACES-CONFIGS should include alist entries of (spec . faces) that determine
+ which faces change color, and then addition keyword options to configure how it
+ changes color. For example:
 
 \(huecycle-set-faces ((foreground . default)))
 
@@ -557,12 +591,13 @@ of 2 elements where first <= second (default: (0.2 0.3)).
        (setq huecycle--interpolate-data (mapcar ,temp-func ',spec-faces-configs)))))
 
 (defun huecycle--convert-config-to-init-args (spec-faces-config)
-  "Convert SPEC-FACES-CONFIG to a form that can be applied to `huecycle--init-interp-datum'.
+  "Convert SPEC-FACES-CONFIG for use in `huecycle--init-interp-datum'.
 For example, given a list:
 
 \( (foreground . default) (background . highlight) :speed 10.0 )
 
-Will convert the beginning to an alist, then retain rest of the keyword value arguments:
+Will convert the beginning to an alist, then retain rest of the keyword value
+arguments:
 
 \( ((foreground . default) (background . highlight)) :speed 10.0 )"
   (let ((alist '()) (rest-args '()) (building-alist t))
