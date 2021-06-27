@@ -170,8 +170,10 @@ regardless of its color beforehand.
         (color-list (plist-get rest :color-list))
         (step-multiple (plist-get rest :speed))
         (random-color-hue-range (plist-get rest :random-color-hue-range))
-        (random-color-saturation-range (plist-get rest :random-color-saturation-range))
-        (random-color-luminance-range (plist-get rest :random-color-luminance-range))
+        (random-color-saturation-range
+         (plist-get rest :random-color-saturation-range))
+        (random-color-luminance-range
+         (plist-get rest :random-color-luminance-range))
         (persist (plist-get rest :persist)))
     (huecycle--interp-datum-create
      :spec-faces-alist (let ((verified-spec-faces
@@ -211,10 +213,16 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
   (let ((spec (car spec-faces))
         (faces (cdr spec-faces)))
     (cond
-     ((listp faces) (dolist (face faces) (cl-assert (facep face) "FACE in faces isn't a valid face")))
-     (t (cl-assert (facep faces) "FACES isn't valid face")))
-    (cl-assert (or (eq spec 'foreground) (eq spec 'background) (eq spec 'distant-foreground))
-               "spec needs to refer to a color"))
+     ((listp faces)
+      (dolist (face faces)
+        (cl-assert (facep face) "FACE in faces isn't a valid face")))
+     (t
+      (cl-assert (facep faces) "FACES isn't valid face")))
+    (cl-assert
+     (or (eq spec 'foreground)
+         (eq spec 'background)
+         (eq spec 'distant-foreground))
+     "spec needs to refer to a color"))
   spec-faces)
 
 (defun huecycle--hex-to-rgb (hex)
@@ -230,9 +238,10 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
     (list red green blue)))
 
 (defun huecycle--hex-to-hsl-color (color)
-  "Convert COLOR, a hex string color with 2 digits per component, to a `huecycle--color'."
+  "Convert COLOR, a hex string with 2 digits per component, to `huecycle--color'."
   (pcase (apply 'color-rgb-to-hsl (huecycle--hex-to-rgb color))
-    (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
+    (`(,hue ,sat ,lum)
+     (huecycle--color-create :hue hue :saturation sat :luminance lum))
     (`(,_) (error "Could not parse color"))))
 
 (defun huecycle--get-start-color (face spec)
@@ -243,22 +252,29 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
            ((eq spec 'background) (face-attribute face :background))
            ((eq spec 'distant-foreground) (face-attribute face :distant-foreground))
            (t 'unspecified)))
-         (attribute-color (if (eq attribute 'unspecified) huecycle--default-start-color attribute))
+         (attribute-color
+          (if (eq attribute 'unspecified) huecycle--default-start-color attribute))
          (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-color))))
     (pcase hsl
-      (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
+      (`(,hue ,sat ,lum)
+       (huecycle--color-create :hue hue :saturation sat :luminance lum))
       (`(,_) (error "Could not parse color")))))
 
 (defun huecycle-get-random-hsl-color (interp-datum)
   "Return random `huecycle--color' using ranges from INTERP-DATUM."
-  (let (
-        (hue-range (huecycle--interp-datum-random-color-hue-range interp-datum))
-        (sat-range (huecycle--interp-datum-random-color-saturation-range interp-datum))
-        (lum-range (huecycle--interp-datum-random-color-luminance-range interp-datum)))
-  (huecycle--color-create
-   :hue (huecycle--get-random-float-from (nth 0 hue-range) (nth 1 hue-range))
-   :saturation (huecycle--get-random-float-from (nth 0 sat-range) (nth 1 sat-range))
-   :luminance (huecycle--get-random-float-from (nth 0 lum-range) (nth 1 lum-range)))))
+  (let ((hue-range
+         (huecycle--interp-datum-random-color-hue-range interp-datum))
+        (sat-range
+         (huecycle--interp-datum-random-color-saturation-range interp-datum))
+        (lum-range
+         (huecycle--interp-datum-random-color-luminance-range interp-datum)))
+    (huecycle--color-create
+     :hue
+     (huecycle--get-random-float-from (nth 0 hue-range) (nth 1 hue-range))
+     :saturation
+     (huecycle--get-random-float-from (nth 0 sat-range) (nth 1 sat-range))
+     :luminance
+     (huecycle--get-random-float-from (nth 0 lum-range) (nth 1 lum-range)))))
 
 (defun huecycle--get-random-float-from (lower upper)
   "Gets random float from in range [lower, upper].
@@ -275,10 +291,15 @@ LOWER and UPPER should be in range [0.0, 1.0]"
 
 (defun huecycle-get-next-list-color (interp-datum)
   "Get the next color from INTERP-DATUM's color list."
-  (let ((color-list (huecycle--interp-datum-color-list interp-datum))
-        (color-list-index (huecycle--interp-datum-color-list-index interp-datum)))
+  (let ((color-list
+         (huecycle--interp-datum-color-list interp-datum))
+        (color-list-index
+         (huecycle--interp-datum-color-list-index interp-datum)))
     (unless (= (length color-list) 0)
-      (let ((next-color (nth (huecycle--interp-datum-color-list-index interp-datum) color-list)))
+      (let ((next-color
+             (nth
+              (huecycle--interp-datum-color-list-index interp-datum)
+              color-list)))
         (setf (huecycle--interp-datum-color-list-index interp-datum)
               (mod (1+ color-list-index) (length color-list)))
         next-color))))
@@ -302,14 +323,24 @@ PROGRESS is a float in the range [0, 1], but providing a value outside of that
  will extrapolate new values. START and END are `huecycle--color'."
   (let ((new-hue
          (huecycle--clamp
-          (+ (* (- 1 progress) (huecycle--color-hue start)) (* progress (huecycle--color-hue end))) 0 1))
+          (+
+           (* (- 1 progress) (huecycle--color-hue start))
+           (* progress (huecycle--color-hue end)))
+          0 1))
         (new-sat
          (huecycle--clamp
-          (+ (* (- 1 progress) (huecycle--color-saturation start)) (* progress (huecycle--color-saturation end))) 0 1))
+          (+
+           (* (- 1 progress) (huecycle--color-saturation start))
+           (* progress (huecycle--color-saturation end)))
+          0 1))
         (new-lum
          (huecycle--clamp
-          (+ (* (- 1 progress) (huecycle--color-luminance start)) (* progress (huecycle--color-luminance end))) 0 1)))
-    (huecycle--color-create :hue new-hue :saturation new-sat :luminance new-lum)))
+          (+
+           (* (- 1 progress) (huecycle--color-luminance start))
+           (* progress (huecycle--color-luminance end)))
+          0 1)))
+    (huecycle--color-create
+     :hue new-hue :saturation new-sat :luminance new-lum)))
 
 (defun huecycle-interpolate-step (progress start end)
   "Interpolate `huecycle-color's START and END with a step function.
@@ -322,7 +353,8 @@ PROGRESS is float in range [0, 1]."
   (huecycle-interpolate-linear (expt progress 2) start end))
 
 (defun huecycle--hsl-color-to-hex (hsl-color)
-  "Convert HSL-COLOR, a `huecycle--color', to hex string with 2 digits for each component."
+  "Convert HSL-COLOR, a `huecycle--color', to hex string.
+The hex string will have 2 digits for each component."
   (let ((rgb (color-hsl-to-rgb
               (huecycle--color-hue hsl-color)
               (huecycle--color-saturation hsl-color)
@@ -330,7 +362,9 @@ PROGRESS is float in range [0, 1]."
     (color-rgb-to-hex (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) 2)))
 
 (defun huecycle--update-progress (new-progress interp-datum)
-  "Update INTERP-DATUM's progress by adding NEW-PROGRESS by INTERP-DATUM's multiple value."
+  "Update INTERP-DATUM's progress.
+Progress is updateded by by adding NEW-PROGRESS multiplied by INTERP-DATUM's
+multiple value."
   (let ((progress (huecycle--interp-datum-progress interp-datum))
         (multiple (huecycle--interp-datum-step-multiple interp-datum)))
     (setq progress (+ progress (* new-progress multiple)))
@@ -349,30 +383,43 @@ PROGRESS is float in range [0, 1]."
 
 (defun huecycle--set-all-faces (interp-datum)
   "Apply all face-remaps for all faces in INTERP-DATUM."
-  (let* ((spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
-         (interp-func (huecycle--interp-datum-interp-func interp-datum))
-         (start-colors-alist (huecycle--interp-datum-start-colors-alist interp-datum))
-         (end-colors-alist (huecycle--interp-datum-end-colors-alist interp-datum))
-         (progress (huecycle--interp-datum-progress interp-datum))
+  (let* ((spec-faces-alist
+          (huecycle--interp-datum-spec-faces-alist interp-datum))
+         (interp-func
+          (huecycle--interp-datum-interp-func interp-datum))
+         (start-colors-alist
+          (huecycle--interp-datum-start-colors-alist interp-datum))
+         (end-colors-alist
+          (huecycle--interp-datum-end-colors-alist interp-datum))
+         (progress
+          (huecycle--interp-datum-progress interp-datum))
          ;; Apply all face remaps, and get the cookies
-         (new-cookies (cl-loop for (spec . faces) in spec-faces-alist
-                               collect
-                               (let* ((start-colors (cdr (assoc spec start-colors-alist)))
-                                      (end-colors (cdr (assoc spec end-colors-alist))))
-                                 (cl-mapcar
-                                  (lambda (face start end) (huecycle--set-face face spec interp-func start end progress))
-                                  faces start-colors end-colors))))
+         (new-cookies
+          (cl-loop for (spec . faces) in spec-faces-alist collect
+                   (let* ((start-colors (cdr (assoc spec start-colors-alist)))
+                          (end-colors (cdr (assoc spec end-colors-alist))))
+                     (cl-mapcar
+                      (lambda (face start end)
+                        (huecycle--set-face
+                         face spec interp-func start end progress))
+                      faces start-colors end-colors))))
          (flat-cookies (apply #'append new-cookies)))
-      (setf (huecycle--interp-datum-cookies interp-datum) flat-cookies)))
-
+    (setf (huecycle--interp-datum-cookies interp-datum) flat-cookies)))
 
 (defun huecycle--set-face (face spec interp-func start-color end-color progress)
   "Apply face-remap to proper aspect of FACE.
-Uses FACE's SPEC using INTERP-FUNC to interpolate START-COLOR and END-COLOR at PROGRESS, and recalculates FACE afterwards."
-  (let* ((new-color (huecycle--hsl-color-to-hex (funcall interp-func progress start-color end-color)))
-         (cookie (cond ((eq 'background spec) (face-remap-add-relative face :background new-color))
-                       ((eq 'foreground spec) (face-remap-add-relative face :foreground new-color))
-                       ((eq 'distant-foreground spec) (face-remap-add-relative face :distant-foreground new-color)))))
+Uses FACE's SPEC using INTERP-FUNC to interpolate START-COLOR and END-COLOR at
+PROGRESS, and recalculates FACE afterwards."
+  (let* ((new-color
+          (huecycle--hsl-color-to-hex
+           (funcall interp-func progress start-color end-color)))
+         (cookie (cond ((eq 'background spec)
+                        (face-remap-add-relative face :background new-color))
+                       ((eq 'foreground spec)
+                        (face-remap-add-relative face :foreground new-color))
+                       ((eq 'distant-foreground spec)
+                        (face-remap-add-relative face :distant-foreground
+                                                 new-color)))))
     (face-spec-recalc face (selected-frame))
     cookie))
 
@@ -382,28 +429,40 @@ Must be called before any other operations on the INTERP-DATUM. If
 `interp-datum'  start-colors-alist is not the empty list and persist is t, skips
 initializing it."
   (let* ((persist (huecycle--interp-datum-persist interp-datum))
-         (before-start-colors-alist (huecycle--interp-datum-start-colors-alist interp-datum)))
+         (before-start-colors-alist
+          (huecycle--interp-datum-start-colors-alist interp-datum)))
     (if (and persist before-start-colors-alist)
-        nil ;; If it is already initialized and we presist, we should skip init
-      (let* ((next-color-func (huecycle--interp-datum-next-color-func interp-datum))
-             (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
-             (default-start-color (huecycle--interp-datum-default-start-color interp-datum))
+        nil ;; If it is already initialized and we persist, we should skip init
+      (let* ((next-color-func
+              (huecycle--interp-datum-next-color-func interp-datum))
+             (spec-faces-alist
+              (huecycle--interp-datum-spec-faces-alist interp-datum))
+             (default-start-color
+               (huecycle--interp-datum-default-start-color interp-datum))
              (start-colors-alist
-              (cl-loop for (spec . faces) in spec-faces-alist
-                       collect (if default-start-color
-                                   `(,spec . ,(make-list (length faces) default-start-color))
-                                 `(,spec . ,(mapcar (lambda (face) (huecycle--get-start-color face spec)) faces)))))
+              (cl-loop for (spec . faces) in spec-faces-alist collect
+                       (if default-start-color
+                           `(,spec . ,(make-list
+                                       (length faces) default-start-color))
+                         `(,spec . ,(mapcar
+                                     (lambda (face)
+                                       (huecycle--get-start-color face spec))
+                                     faces)))))
              (next-colors-alist
               (let ((next-color (funcall next-color-func interp-datum)))
-                (cl-loop for (spec . faces) in spec-faces-alist
-                         collect `(,spec . ,(make-list (length faces) next-color))))))
-        (setf (huecycle--interp-datum-start-colors-alist interp-datum) start-colors-alist)
-        (setf (huecycle--interp-datum-end-colors-alist interp-datum) next-colors-alist)
-        (setf (huecycle--interp-datum-progress interp-datum) 0.0)))))
+                (cl-loop for (spec . faces) in spec-faces-alist collect
+                         `(,spec . ,(make-list (length faces) next-color))))))
+        (setf (huecycle--interp-datum-start-colors-alist interp-datum)
+              start-colors-alist)
+        (setf (huecycle--interp-datum-end-colors-alist interp-datum)
+              next-colors-alist)
+        (setf (huecycle--interp-datum-progress interp-datum)
+              0.0)))))
 
 (defun huecycle--change-next-colors (interp-datum)
   "Cycle INTERP-DATUM's start and end colors.
-End colors become start colors, and the new end colors are determined by `huecycle--interp-datum-next-color-func'."
+End colors become start colors, and the new end colors are determined by
+`huecycle--interp-datum-next-color-func'."
   (let* ((end-colors-alist (huecycle--interp-datum-end-colors-alist interp-datum))
          (next-color-func (huecycle--interp-datum-next-color-func interp-datum))
          (spec-faces-alist (huecycle--interp-datum-spec-faces-alist interp-datum))
@@ -414,8 +473,10 @@ End colors become start colors, and the new end colors are determined by `huecyc
                                    ,(make-list
                                      (length (cdr (assoc spec end-colors-alist)))
                                      next-color)))))
-    (setf (huecycle--interp-datum-start-colors-alist interp-datum) end-colors-alist)
-    (setf (huecycle--interp-datum-end-colors-alist interp-datum) next-colors-alist)))
+    (setf (huecycle--interp-datum-start-colors-alist interp-datum)
+          end-colors-alist)
+    (setf (huecycle--interp-datum-end-colors-alist interp-datum)
+          next-colors-alist)))
 
 ;;;###autoload
 (defun huecycle ()
@@ -461,7 +522,8 @@ End colors become start colors, and the new end colors are determined by `huecyc
 (defun huecycle--time-elapsed ()
   "Return t if huecycle has ran for more than `huecycle-cycle-duration' secs.
 Always returns nil if `huecycle-cycle-duration' is <= 0."
-  (and (> huecycle-cycle-duration 0) (> huecycle--current-time huecycle-cycle-duration)))
+  (and (> huecycle-cycle-duration 0)
+       (> huecycle--current-time huecycle-cycle-duration)))
 
 (defun huecycle--update-buffer-data ()
   "Update buffer data with the current buffer."
@@ -477,7 +539,8 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
   "Initialize buffer with interpolation data, if it isn't already initialized."
   (if (not (huecycle--buffer-has-active-data))
       (progn
-        (setq huecycle--buffer-data (mapcar #'huecycle--copy-interp-datum huecycle--interpolate-data))
+        (setq huecycle--buffer-data
+              (mapcar #'huecycle--copy-interp-datum huecycle--interpolate-data))
         (huecycle--add-buffer (current-buffer)))))
 
 (defun huecycle--update-recently-used-buffer (buffer)
@@ -492,7 +555,8 @@ buffer most already be in `huecycle--active-buffers'."
 
 (defun huecycle--add-buffer (buffer)
   "Add BUFFER to `huecycle--active-buffers'.
-If the length of `huecycle--active-buffers' exceeds `huecycle--max-active-buffers', then a buffer is evicted."
+If the length of `huecycle--active-buffers' exceeds
+`huecycle--max-active-buffers', then a buffer is evicted."
   (push buffer huecycle--active-buffers)
   (if (length> huecycle--active-buffers huecycle--max-active-buffers)
       (huecycle--evict-buffers)))
@@ -609,25 +673,37 @@ You can specify multiple groups, each with their own configuration options:
 
 Note that you do not quote lists or functions.
 Available options are:
-- `:interp-func' Interpolation function (default: `huecycle-interpolate-linear').
-- `:next-color-func' Function to determine next color to interpolate to (default: `huecycle-get-random-hsl-color').
-- `:start-color' Color all faces will start with (overrides current spec color) (default: nil).
-- `:color-list' List of colors that may be used by `:next-color-func' (default: Empty list).
-Use `huecycle-get-next-list-color' and `huecycle-get-random-color-from-list' as `:next-color-func'
+- `:interp-func' Interpolation function
+\(default: `huecycle-interpolate-linear').
+- `:next-color-func' Function to determine next color to interpolate to
+\(default: `huecycle-get-random-hsl-color').
+- `:start-color' Color all faces will start with (overrides current spec color)
+\(default: nil).
+- `:color-list' List of colors that may be used by `:next-color-func'
+\(default: Empty list).
+Use `huecycle-get-next-list-color' and `huecycle-get-random-color-from-list' as
+`:next-color-func', or write your own that uses this field.
 - `:speed' Speed of interpolation (default: 1.0).
-- `:random-color-hue-range' range hue values are randomly chosen from (by `next-color-func'). Is a list of 2
-elements where first <= second (default: (0.0 1.0)).
-- `:random-color-saturation-range' range saturation values are randomly chosen from (by `next-color-func'). Is a
-list of 2 elements where first <= second (default: (0.5 1.0)).
-- `:random-color-luminance-range' range luminance values are randomly chosen from (by `next-color-func'). Is a list
-of 2 elements where first <= second (default: (0.2 0.3)).
-- `:persist' whether face should revert when huecycle ends (default: nil)."
+- `:random-color-hue-range' range hue values are randomly chosen from (by
+`next-color-func'). Is a list of 2 elements where first <= second
+\(default: (0.0 1.0)).
+- `:random-color-saturation-range' range saturation values are randomly chosen
+from (by `next-color-func'). Is a list of 2 elements where first <= second
+\(default: (0.5 1.0)).
+- `:random-color-luminance-range' range luminance values are randomly chosen
+from (by `next-color-func'). Is a list of 2 elements where first <= second
+\(default: (0.2 0.3)).
+- `:persist' whether face should revert when huecycle ends
+\(default: nil)."
   (let ((temp-func (make-symbol "conversion-function")))
     `(let ((,temp-func
-            (lambda (config) (apply #'huecycle--init-interp-datum (huecycle--convert-config-to-init-args config)))))
+            (lambda (config)
+              (apply #'huecycle--init-interp-datum
+                     (huecycle--convert-config-to-init-args config)))))
        (huecycle-reset-all-faces-on-all-buffers)
        (huecycle--erase-all-buffer-data)
-       (setq huecycle--interpolate-data (mapcar ,temp-func ',spec-faces-configs)))))
+       (setq huecycle--interpolate-data
+             (mapcar ,temp-func ',spec-faces-configs)))))
 
 (defun huecycle--convert-config-to-init-args (spec-faces-config)
   "Convert SPEC-FACES-CONFIG for use in `huecycle--init-interp-datum'.
