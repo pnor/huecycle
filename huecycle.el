@@ -5,7 +5,7 @@
 ;; Author: Phillip O'Reggio <https://github.com/pnor>
 ;; Maintainer: Phillip O'Reggio
 ;; Version: 1.0.0
-;; Package-Requires: ((cl-lib "1.0"))
+;; Package-Requires: ((cl-lib "0.7") )
 ;; Keywords: faces
 ;; Keywords: faces mode-line
 ;; Homepage: https://github.com/pnor/huecycle/tree/master
@@ -233,7 +233,7 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
   "Convert COLOR, a hex string color with 2 digits per component, to a `huecycle--color'."
   (pcase (apply 'color-rgb-to-hsl (huecycle--hex-to-rgb color))
     (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
-    (`(,_) error "Could not parse hl-line")))
+    (`(,_) (error "Could not parse color"))))
 
 (defun huecycle--get-start-color (face spec)
   "Return current color of FACE based on SPEC."
@@ -247,7 +247,7 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
          (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-color))))
     (pcase hsl
       (`(,hue ,sat ,lum) (huecycle--color-create :hue hue :saturation sat :luminance lum))
-      (`(,_) error "Could not parse color"))))
+      (`(,_) (error "Could not parse color")))))
 
 (defun huecycle-get-random-hsl-color (interp-datum)
   "Return random `huecycle--color' using ranges from INTERP-DATUM."
@@ -267,7 +267,7 @@ LOWER and UPPER should be in range [0.0, 1.0]"
   (cl-assert (and (>= upper 0.0) (<= upper 1.0)) "upper is not in range [0, 1]")
   (cl-assert (<= lower upper) "lower should be <= upper")
   (if (= lower upper)
-      (lower)
+      lower
     (let* ((high-number 10000000000)
            (lower-int (truncate (* lower high-number)))
            (upper-int (truncate (* upper high-number))))
