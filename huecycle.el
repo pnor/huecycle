@@ -49,8 +49,8 @@
   :group 'huecycle)
 
 (defcustom huecycle-cycle-duration 0
-  "How long to huecycle for before stopping. Any value <= 0 is treated as
-infinity."
+  "How long to huecycle for before stopping.
+Any value <= 0 is treated as infinity."
   :type '(float)
   :group 'huecycle)
 
@@ -66,8 +66,8 @@ Buffers are arranged based on least recently used, where the first entry is most
 recent and last least.")
 
 (defvar huecycle--max-active-buffers 10
-  "The maximum number of total buffers that can be in `huecycle--active-buffers'
-and have `huecycle--buffer-data'.")
+  "The max number of buffers in `huecycle--active-buffers'.
+Each buffer will also have `huecycle--buffer-data'.")
 
 (defvar huecycle--idle-timer nil
   "Idle timer used to start huecycle.")
@@ -590,6 +590,7 @@ Or add multiple specs to one group:
 All faces in one group will sync up their color changes with each other.
 You can specify multiple groups, each with their own configuration options:
 
+```
 \(huecycle-set-faces
  ((foreground . (org-document-info org-document-title))
   :color-list (\"#FF0000\" \"#00FF00\" \"#0000FF\")
@@ -604,6 +605,7 @@ You can specify multiple groups, each with their own configuration options:
   (background . (org-table-header))
   :speed 5.0
   :start-color \"#888888\"))
+'''
 
 Note that you do not quote lists or functions.
 Available options are:
