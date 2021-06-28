@@ -73,7 +73,11 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
 (ert-deftest huecycle-test-huecycle-runs ()
   "Test that huecycle runs without errors."
   (huecycle-with-test-env
-   (huecycle)))
+   (huecycle))
+  (huecycle-with-test-env
+   (huecycle)
+   :huecycle--interpolate-data
+   (mapcar #'huecycle--init-interp-datum '(((foreground . default))))))
 
 (ert-deftest huecycle-cleans-up ()
   "Test huecycle cleans up after itself."
@@ -492,5 +496,18 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
    :huecycle--interpolate-data
    (mapcar #'huecycle--init-interp-datum '(((foreground . default))))
    :huecycle--max-active-buffers 5))
+
+(ert-deftest huecycle-works-with-name-color-faces ()
+  "Test huecycle interpolates faces that specifiy their colors using color names."
+  (unless (eq (face-attribute 'default :foreground) 'unspecified)
+    (let ((old-default-face (face-attribute 'default :foreground)))
+      (set-face-attribute 'default (selected-frame) :foreground "White")
+      (unwind-protect
+          (progn
+            (huecycle-with-test-env
+             (huecycle)
+             :huecycle--interpolate-data
+             (mapcar #'huecycle--init-interp-datum '(((foreground . default))))))
+        (set-face-attribute 'default (selected-frame) :foreground old-default-face)))))
 
 ;;; test-huecycle.el ends here

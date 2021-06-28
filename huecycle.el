@@ -245,7 +245,8 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
     (`(,_) (error "Could not parse color"))))
 
 (defun huecycle--get-start-color (face spec)
-  "Return current color of FACE based on SPEC."
+  "Return current color of FACE based on SPEC.
+If FACE's color is undefined, uses `huecycle--default-start-color'."
   (let* ((attribute
           (cond
            ((eq spec 'foreground) (face-attribute face :foreground))
@@ -254,7 +255,12 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
            (t 'unspecified)))
          (attribute-color
           (if (eq attribute 'unspecified) huecycle--default-start-color attribute))
-         (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-color))))
+         (attribute-hex
+          (if (and (>= (length attribute-color) 1)
+                   (equal "#" (substring attribute-color 0 1)))
+              attribute-color
+            (color-rgb-to-hex (color-name-to-rgb attribute-color))))
+         (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-hex))))
     (pcase hsl
       (`(,hue ,sat ,lum)
        (huecycle--color-create :hue hue :saturation sat :luminance lum))
