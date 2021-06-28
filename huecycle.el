@@ -5,7 +5,7 @@
 ;; Author: Phillip O'Reggio <https://github.com/pnor>
 ;; Maintainer: Phillip O'Reggio
 ;; Version: 1.0.0
-;; Package-Requires: ((cl-lib "0.7") )
+;; Package-Requires: ((cl-lib "0.7") (emacs "27.1"))
 ;; Keywords: faces
 ;; Keywords: faces mode-line
 ;; Homepage: https://github.com/pnor/huecycle/tree/master
