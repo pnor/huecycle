@@ -37,6 +37,7 @@
 
 (require 'cl-lib)
 (require 'color)
+(require 'face-remap)
 
 (defgroup huecycle ()
   "Idle color animation for faces."
@@ -227,7 +228,7 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
 
 (defun huecycle--hex-to-rgb (hex)
   "Convert HEX, a hex string with 2 digits per component, to rgb tuple."
-  (cl-assert (length= hex 7) "hex string should have 2 digits per component")
+  (cl-assert (= (length hex) 7) "hex string should have 2 digits per component")
   (let (
         (red
          (/ (string-to-number (substring hex 1 3) 16) 255.0))
@@ -313,7 +314,7 @@ LOWER and UPPER should be in range [0.0, 1.0]"
 (defun huecycle-get-random-color-from-list (interp-datum)
   "Get random color from INTERP-DATUM's color list."
   (let ((color-list (huecycle--interp-datum-color-list interp-datum)))
-    (if (length= (huecycle--interp-datum-color-list interp-datum) 0)
+    (if (= (length (huecycle--interp-datum-color-list interp-datum)) 0)
        nil
       (setf (huecycle--interp-datum-color-list-index interp-datum)
             (random (length color-list)))
@@ -564,7 +565,7 @@ buffer most already be in `huecycle--active-buffers'."
 If the length of `huecycle--active-buffers' exceeds
 `huecycle--max-active-buffers', then a buffer is evicted."
   (push buffer huecycle--active-buffers)
-  (if (length> huecycle--active-buffers huecycle--max-active-buffers)
+  (if (> (length huecycle--active-buffers) huecycle--max-active-buffers)
       (huecycle--evict-buffers)))
 
 (defun huecycle--evict-buffers ()
