@@ -260,7 +260,7 @@ If FACE's color is undefined, uses `huecycle--default-start-color'."
           (if (and (>= (length attribute-color) 1)
                    (equal "#" (substring attribute-color 0 1)))
               attribute-color
-            (color-rgb-to-hex (color-name-to-rgb attribute-color))))
+            (apply (lambda (r g b) (color-rgb-to-hex r g b 2)) (color-name-to-rgb attribute-color))))
          (hsl (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb attribute-hex))))
     (pcase hsl
       (`(,hue ,sat ,lum)
