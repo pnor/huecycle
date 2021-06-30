@@ -370,7 +370,7 @@ The hex string will have 2 digits for each component."
 
 (defun huecycle--update-progress (new-progress interp-datum)
   "Update INTERP-DATUM's progress.
-Progress is updateded by by adding NEW-PROGRESS multiplied by INTERP-DATUM's
+Progress is updated by by adding NEW-PROGRESS multiplied by INTERP-DATUM's
 multiple value."
   (let ((progress (huecycle--interp-datum-progress interp-datum))
         (multiple (huecycle--interp-datum-step-multiple interp-datum)))
@@ -503,7 +503,7 @@ End colors become start colors, and the new end colors are determined by
   (mapc #'huecycle--init-colors huecycle--buffer-data))
 
 (defun huecycle--lerp-colors ()
-  "Change face appearence for huecycle."
+  "Change face appearance for huecycle."
   (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size))
   (dolist (datum huecycle--buffer-data)
     (huecycle--update-progress huecycle-step-size datum)
@@ -601,7 +601,7 @@ Removes buffers from `huecycle--active-buffers' until length is less than
 
 ;;;###autoload
 (defun huecycle-when-idle (secs)
-  "Start huecycle affect aftre SECS seconds."
+  "Start huecycle affect after SECS seconds."
   (interactive "nHow long before huecycle-ing (seconds): ")
   "Starts the colorization effect. when idle for `secs' seconds"
   (huecycle-stop-idle)
@@ -622,7 +622,7 @@ If secs >= 0, will huecycle for an infinite amount of time."
   (huecycle--reset-all-faces-for-buffer (current-buffer)))
 
 (defun huecycle--reset-all-faces-for-buffer (buffer)
-  "Reset faces from huecyling in BUFFER."
+  "Reset faces from huecycling in BUFFER."
   (if (buffer-live-p buffer)
       (with-current-buffer buffer
         (mapc #'huecycle--reset-faces huecycle--buffer-data))))
