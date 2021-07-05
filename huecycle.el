@@ -7,8 +7,7 @@
 ;; Version: 1.0.0
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: faces
-;; Keywords: faces mode-line
-;; Homepage: https://github.com/pnor/huecycle/tree/master
+;; Homepage: https://github.com/pnor/huecycle
 
 ;; This file is not part of GNU Emacs.
 
@@ -30,7 +29,7 @@
 ;;
 
 ;;; Commentary:
-;;
+
 ;; `huecycle' provides idle color animation for any face, or groups of faces.
 
 ;;; Code:
@@ -240,7 +239,7 @@ Return spec-faces unchanged, or fails assertion if input is invalid."
 
 (defun huecycle--hex-to-hsl-color (color)
   "Convert COLOR, a hex string with 2 digits per component, to `huecycle--color'."
-  (pcase (apply 'color-rgb-to-hsl (huecycle--hex-to-rgb color))
+  (pcase (apply #'color-rgb-to-hsl (huecycle--hex-to-rgb color))
     (`(,hue ,sat ,lum)
      (huecycle--color-create :hue hue :saturation sat :luminance lum))
     (`(,_) (error "Could not parse color"))))
@@ -606,7 +605,7 @@ Removes buffers from `huecycle--active-buffers' until length is less than
   "Starts the colorization effect. when idle for `secs' seconds"
   (huecycle-stop-idle)
   (if (>= secs 0)
-      (setq huecycle--idle-timer (run-with-idle-timer secs t 'huecycle))))
+      (setq huecycle--idle-timer (run-with-idle-timer secs t #'huecycle))))
 
 ;;;###autoload
 (defun huecycle-set-cycle-duration (secs)
