@@ -3,6 +3,8 @@
 #+SINCE:   <replace with next tagged release version>
 #+STARTUP: inlineimages nofold
 
+[[https://melpa.org/#/huecycle][file:https://melpa.org/packages/huecycle-badge.svg]]
+
 # A summary of what this module does.
 Emacs package that lets faces change color when idle:
 [[./images/huecycle.gif]]
