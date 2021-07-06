@@ -10,9 +10,9 @@ Emacs package that lets faces change color when idle:
 * Features
 # An in-depth list of features, how to use them, and their dependencies.
 First, define what faces will be affected with =huecycle-set-faces=:
-#+BEGIN_SRC elisp
+#+BEGIN_SRC emacs-lisp
 (huecycle-set-faces
- ((background . foreground)))
+ ((background . mode-line)))
 #+END_SRC
 Then calling =huecycle= will then let those faces change color.
 
@@ -20,7 +20,7 @@ You can specify multiple faces into a group, which will allow settings to take a
 the form of association list entries mapping a face spec to affected faces, followed by options.
 #+BEGIN_SRC emacs-lisp
 (huecycle-set-faces
- ((background . foreground)
+ ((background . mode-line)
   (foreground . (warning highlight))
   :speed 2.0
   :persist t))
