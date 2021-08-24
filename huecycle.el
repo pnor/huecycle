@@ -429,7 +429,6 @@ PROGRESS, and recalculates FACE afterwards."
                        ((eq 'distant-foreground spec)
                         (face-remap-add-relative face :distant-foreground
                                                  new-color)))))
-    (face-spec-recalc face (selected-frame))
     cookie))
 
 (defun huecycle--init-colors (interp-datum)
@@ -491,17 +490,26 @@ End colors become start colors, and the new end colors are determined by
 (defun huecycle ()
   "Start huecycling faces."
   (interactive)
-  (when huecycle--interpolate-data
-    (huecycle--setup)
-    (while (and (not (huecycle--input-pending)) (not (huecycle--time-elapsed)))
-      (sit-for huecycle-step-size)
-      (huecycle--lerp-colors))
-    (huecycle--tear-down)))
+  (huecycle--buffer (current-buffer)))
 
-(defun huecycle--setup ()
-  "Setup variables and data for `huecycle--lerp-colors'."
+(defun huecycle--buffer (buffer)
+  "start huecycling faces in BUFFER."
+  (interactive)
+  (when huecycle--interpolate-data
+    (with-current-buffer buffer
+      (huecycle--setup buffer)
+      (while (and (not (huecycle--input-pending)) (not (huecycle--time-elapsed)))
+        (sit-for huecycle-step-size)
+        (unless huecycle--buffer-data
+          (print "! not setup!"))
+        (huecycle--lerp-colors)
+        (huecycle--tear-down)))))
+
+(defun huecycle--setup (buffer)
+  "Setup variables and data in BUFFER for `huecycle--lerp-colors'.
+Also sets up buffer local variable `huecycle--buffer-data'."
   (huecycle-mode 1)
-  (huecycle--update-buffer-data)
+  (huecycle--update-buffer-data buffer)
   (mapc #'huecycle--init-colors huecycle--buffer-data))
 
 (defun huecycle--lerp-colors ()
@@ -534,23 +542,23 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
   (and (> huecycle-cycle-duration 0)
        (> huecycle--current-time huecycle-cycle-duration)))
 
-(defun huecycle--update-buffer-data ()
-  "Update buffer data with the current buffer."
-  (if (not (huecycle--buffer-has-active-data))
-      (huecycle--initialize-buffer-data)
+(defun huecycle--update-buffer-data (buffer)
+  "Update BUFFER data with the current buffer."
+  (if (not (huecycle--buffer-has-active-data buffer))
+      (huecycle--initialize-buffer-data buffer)
     (huecycle--update-recently-used-buffer (current-buffer))))
 
-(defun huecycle--buffer-has-active-data ()
-  "Return t if current buffer has active interpolation data."
-  (and huecycle--buffer-data (member (current-buffer) huecycle--active-buffers)))
+(defun huecycle--buffer-has-active-data (buffer)
+  "Return t if current BUFFER has active interpolation data."
+  (and huecycle--buffer-data (member buffer huecycle--active-buffers)))
 
-(defun huecycle--initialize-buffer-data ()
-  "Initialize buffer with interpolation data, if it isn't already initialized."
-  (if (not (huecycle--buffer-has-active-data))
+(defun huecycle--initialize-buffer-data (buffer)
+  "Initialize BUFFER with interpolation data, if it isn't already initialized."
+  (if (not (huecycle--buffer-has-active-data buffer))
       (progn
         (setq huecycle--buffer-data
               (mapcar #'huecycle--copy-interp-datum huecycle--interpolate-data))
-        (huecycle--add-buffer (current-buffer)))))
+        (huecycle--add-buffer buffer))))
 
 (defun huecycle--update-recently-used-buffer (buffer)
   "Update BUFFER so it is the most recently used in `huecycle--active-buffers'.
