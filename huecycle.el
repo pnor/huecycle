@@ -502,8 +502,8 @@ End colors become start colors, and the new end colors are determined by
         (sit-for huecycle-step-size)
         (unless huecycle--buffer-data
           (print "! not setup!"))
-        (huecycle--lerp-colors)
-        (huecycle--tear-down)))))
+        (huecycle--lerp-colors))
+      (huecycle--tear-down))))
 
 (defun huecycle--setup (buffer)
   "Setup variables and data in BUFFER for `huecycle--lerp-colors'.
@@ -641,7 +641,8 @@ If secs >= 0, will huecycle for an infinite amount of time."
 (defun huecycle-reset-all-faces-on-all-buffers ()
   "Reset faces from huecycling across all buffers."
   (interactive)
-  (mapc #'huecycle--reset-all-faces-for-buffer huecycle--active-buffers))
+  (mapc #'huecycle--reset-all-faces-for-buffer huecycle--active-buffers)
+  (huecycle--erase-all-buffer-data))
 
 (defun huecycle--erase-all-buffer-data ()
   "Erase `huecycle--buffer-data' for all buffers in `huecycle--active-buffers'.
