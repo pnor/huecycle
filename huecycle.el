@@ -57,6 +57,13 @@ Any value <= 0 is treated as infinity."
   :type '(float)
   :group 'huecycle)
 
+(defvar huecycle-buffers-to-huecycle-in '(#'current-buffer)
+  "List of buffers that will be affected by `huecycle'.
+Is a list of functions with no input that return a buffer. This allows the
+ ability to specify static buffers that will always huecycle (using lambda that
+ returns the buffer) and dynamic ways to get the buffer (having `current-buffer'
+ to product the current buffer to huecycle).")
+
 (defvar huecycle--interpolate-data '()
   "List of `huecycle-interpolate-datum'.")
 
@@ -490,51 +497,56 @@ End colors become start colors, and the new end colors are determined by
 (defun huecycle ()
   "Start huecycling faces."
   (interactive)
-  (huecycle--buffer (current-buffer)))
-
-(defun huecycle--buffer (buffer)
-  "start huecycling faces in BUFFER."
-  (interactive)
-  (when huecycle--interpolate-data
-    (with-current-buffer buffer
-      (huecycle--setup buffer)
+  (let ((buffer-list (mapcar #'funcall huecycle-buffers-to-huecycle-in)))
+    (when huecycle--interpolate-data
+      (mapc #'huecycle--setup buffer-list)
+      ;; (huecycle--setup buffer)
       (while (and (not (huecycle--input-pending)) (not (huecycle--time-elapsed)))
         (sit-for huecycle-step-size)
-        (unless huecycle--buffer-data
-          (print "! not setup!"))
-        (huecycle--lerp-colors))
-      (huecycle--tear-down))))
+        (huecycle--increment-time)
+        (mapc #'huecycle--lerp-colors buffer-list)
+        ;; (huecycle--lerp-colors buffer)
+        )
+      (mapc #'huecycle--tear-down buffer-list))))
 
 (defun huecycle--setup (buffer)
   "Setup variables and data in BUFFER for `huecycle--lerp-colors'.
 Also sets up buffer local variable `huecycle--buffer-data'."
   (huecycle-mode 1)
   (huecycle--update-buffer-data buffer)
-  (mapc #'huecycle--init-colors huecycle--buffer-data))
+  (with-current-buffer buffer
+    (mapc #'huecycle--init-colors huecycle--buffer-data)))
 
-(defun huecycle--lerp-colors ()
-  "Change face appearence for huecycle."
-  (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size))
-  (dolist (datum huecycle--buffer-data)
-    (huecycle--update-progress huecycle-step-size datum)
-    (huecycle--reset-faces datum)
-    (huecycle--set-all-faces datum)))
+(defun huecycle--increment-time ()
+  "Increment `huecycle--current-time' by `huecycle--step-size'."
+  (setq huecycle--current-time (+ huecycle--current-time huecycle-step-size)))
 
-(defun huecycle--tear-down ()
-  "Clean up data after huecycle."
+(defun huecycle--lerp-colors (buffer)
+  "Change face appearence in BUFFER for huecycle."
+  (with-current-buffer buffer
+    (dolist (datum huecycle--buffer-data)
+      (huecycle--update-progress huecycle-step-size datum)
+      (huecycle--reset-faces datum)
+      (huecycle--set-all-faces datum))))
+
+(defun huecycle--lerp-color-in-buffer ())
+
+(defun huecycle--tear-down (buffer)
+  "Clean up data in BUFFER after huecycle."
   (setq huecycle--current-time 0)
-  (huecycle--cleanup-faces)
+  (huecycle--cleanup-faces buffer)
   (huecycle-mode 0))
 
 (defun huecycle--input-pending ()
   "Wrapper around `input-pending-p', to be changed for testing purposes."
   (input-pending-p))
 
-(defun huecycle--cleanup-faces ()
-  "Clean up by resetting faces, respecting whether persist is t or nil."
-  (dolist (interp-datum huecycle--buffer-data)
-    (if (not (huecycle--interp-datum-persist interp-datum))
-        (huecycle--reset-faces interp-datum))))
+(defun huecycle--cleanup-faces (buffer)
+  "Clean up by resetting faces in BUFFER, respecting whether persist is t or nil."
+  (with-current-buffer buffer
+    (dolist (interp-datum huecycle--buffer-data)
+      (if (not (huecycle--interp-datum-persist interp-datum))
+          (huecycle--reset-faces interp-datum)))))
 
 (defun huecycle--time-elapsed ()
   "Return t if huecycle has ran for more than `huecycle-cycle-duration' secs.
