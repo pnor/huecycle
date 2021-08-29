@@ -498,6 +498,8 @@ End colors become start colors, and the new end colors are determined by
   "Start huecycling faces."
   (interactive)
   (let ((buffer-list (mapcar #'funcall huecycle-buffers-to-huecycle-in)))
+    ;; (print buffer-list)
+    ;; (mapc (lambda (buf) (print (buffer-name buf))) buffer-list)
     (when huecycle--interpolate-data
       (huecycle-mode 1)
       (mapc #'huecycle--setup buffer-list)
@@ -512,8 +514,8 @@ End colors become start colors, and the new end colors are determined by
 (defun huecycle--setup (buffer)
   "Setup variables and data in BUFFER for `huecycle--lerp-colors'.
 Also sets up buffer local variable `huecycle--buffer-data'."
-  (huecycle--update-buffer-data buffer)
   (with-current-buffer buffer
+    (huecycle--update-buffer-data)
     (mapc #'huecycle--init-colors huecycle--buffer-data)))
 
 (defun huecycle--increment-time ()
@@ -551,10 +553,10 @@ Always returns nil if `huecycle-cycle-duration' is <= 0."
   (and (> huecycle-cycle-duration 0)
        (> huecycle--current-time huecycle-cycle-duration)))
 
-(defun huecycle--update-buffer-data (buffer)
-  "Update BUFFER data with the current buffer."
-  (if (not (huecycle--buffer-has-active-data buffer))
-      (huecycle--initialize-buffer-data buffer)
+(defun huecycle--update-buffer-data ()
+  "Update huecycle data with the current buffer."
+  (if (not (huecycle--buffer-has-active-data (current-buffer)))
+      (huecycle--initialize-buffer-data (current-buffer))
     (huecycle--update-recently-used-buffer (current-buffer))))
 
 (defun huecycle--buffer-has-active-data (buffer)

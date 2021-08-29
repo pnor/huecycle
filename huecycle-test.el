@@ -513,4 +513,26 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
              (mapcar #'huecycle--init-interp-datum '(((foreground . default))))))
         (set-face-attribute 'default (selected-frame) :foreground old-default-face)))))
 
+(ert-deftest huecycle-works-in-multiple-buffers ()
+  "Test huecycle interpolates in all buffers based on `huecycle-buffers-to-huecycle-in'."
+  (let* ((buffer-1 (get-buffer-create "huecycle-test-buffer-1"))
+         (buffer-2 (get-buffer-create "huecycle-test-buffer-2")))
+    (huecycle-with-test-env
+     (unwind-protect
+         (progn
+           (huecycle)
+           (with-current-buffer buffer-1
+             (should (= 1 (length face-remapping-alist))))
+           (with-current-buffer buffer-2
+             (should (= 1 (length face-remapping-alist)))))
+       (kill-buffer buffer-1)
+       (kill-buffer buffer-2))
+     :huecycle--interpolate-data
+     (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+           `((((foreground . default)) :persist t)))
+     :huecycle-buffers-to-huecycle-in
+     (list
+      (lambda () buffer-1)
+      (lambda () buffer-2)))))
+
 ;;; test-huecycle.el ends here
