@@ -37,6 +37,7 @@ iteration number."
     (body &key
           (huecycle-iterations 1)
           (huecycle-cycle-duration 0)
+          (huecycle-buffers-to-huecycle-in '(list #'current-buffer))
           (huecycle-step-size 0.033333)
           (huecycle--interpolate-data '())
           (huecycle--buffer-data '())
@@ -53,6 +54,7 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
          (huecycle-counter 0)
          (huecycle-iterations ,huecycle-iterations)
          (huecycle-cycle-duration ,huecycle-cycle-duration)
+         (huecycle-buffers-to-huecycle-in ,huecycle-buffers-to-huecycle-in)
          (huecycle-step-size ,huecycle-step-size)
          (huecycle--interpolate-data ,huecycle--interpolate-data)
          (huecycle--buffer-data ,huecycle--buffer-data)
@@ -157,6 +159,7 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
   (huecycle-with-test-env
    (progn
      (huecycle)
+     (print huecycle-buffers-to-huecycle-in)
      (should (= 1 (length face-remapping-alist))))
    :huecycle--interpolate-data
    (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
