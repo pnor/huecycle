@@ -37,6 +37,7 @@ iteration number."
     (body &key
           (huecycle-iterations 1)
           (huecycle-cycle-duration 0)
+          (huecycle-buffers-to-huecycle-in '(list #'current-buffer))
           (huecycle-step-size 0.033333)
           (huecycle--interpolate-data '())
           (huecycle--buffer-data '())
@@ -53,6 +54,7 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
          (huecycle-counter 0)
          (huecycle-iterations ,huecycle-iterations)
          (huecycle-cycle-duration ,huecycle-cycle-duration)
+         (huecycle-buffers-to-huecycle-in ,huecycle-buffers-to-huecycle-in)
          (huecycle-step-size ,huecycle-step-size)
          (huecycle--interpolate-data ,huecycle--interpolate-data)
          (huecycle--buffer-data ,huecycle--buffer-data)
@@ -157,6 +159,7 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
   (huecycle-with-test-env
    (progn
      (huecycle)
+     (print huecycle-buffers-to-huecycle-in)
      (should (= 1 (length face-remapping-alist))))
    :huecycle--interpolate-data
    (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
@@ -509,5 +512,27 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
              :huecycle--interpolate-data
              (mapcar #'huecycle--init-interp-datum '(((foreground . default))))))
         (set-face-attribute 'default (selected-frame) :foreground old-default-face)))))
+
+(ert-deftest huecycle-works-in-multiple-buffers ()
+  "Test huecycle interpolates in all buffers based on `huecycle-buffers-to-huecycle-in'."
+  (let* ((buffer-1 (get-buffer-create "huecycle-test-buffer-1"))
+         (buffer-2 (get-buffer-create "huecycle-test-buffer-2")))
+    (huecycle-with-test-env
+     (unwind-protect
+         (progn
+           (huecycle)
+           (with-current-buffer buffer-1
+             (should (= 1 (length face-remapping-alist))))
+           (with-current-buffer buffer-2
+             (should (= 1 (length face-remapping-alist)))))
+       (kill-buffer buffer-1)
+       (kill-buffer buffer-2))
+     :huecycle--interpolate-data
+     (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+           `((((foreground . default)) :persist t)))
+     :huecycle-buffers-to-huecycle-in
+     (list
+      (lambda () buffer-1)
+      (lambda () buffer-2)))))
 
 ;;; test-huecycle.el ends here
