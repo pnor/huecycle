@@ -664,7 +664,7 @@ Erases all buffer data and clears `huecycle--active-buffers'."
 (defmacro huecycle-set-faces (&rest spec-faces-configs)
   "Set which spec-face groups should huecycle.
 SPEC-FACES-CONFIGS should include alist entries of (spec . faces) that determine
- which faces change color, and then addition keyword options to configure how it
+ which faces change color, and then additional keyword options to configure how it
  changes color. For example:
 
 \(huecycle-set-faces ((foreground . default)))
@@ -722,7 +722,7 @@ from (by `next-color-func'). Is a list of 2 elements where first <= second
 - `:random-color-luminance-range' range luminance values are randomly chosen
 from (by `next-color-func'). Is a list of 2 elements where first <= second
 \(default: (0.2 0.3)).
-- `:persist' whether face should revert when huecycle ends
+- `:persist' whether changes to a face should persist when huecycle ends
 \(default: nil)."
   (let ((temp-func (make-symbol "conversion-function")))
     `(let ((,temp-func
