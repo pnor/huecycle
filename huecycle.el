@@ -110,7 +110,7 @@ When Huecycle mode is enabled, faces specified by `huecycle--interpolate-data'
 affects which aspect of the face will change. Value is a list of the faces
 affected. Spec should be `foreground', `background', or `distant-foreground'.")
   (default-start-color nil :documentation
-    "Start color to use over the faces spec, as `huecycle--color'")
+                       "Start color to use over the faces spec, as `huecycle--color'")
   (start-colors-alist '() :documentation
                       "alist of interpolated start colors. Key is spec and value
  is list of `huecycle--color'.")
@@ -142,6 +142,11 @@ in `huecycle-get-random-hsl-color'")
                  "Multiplier on how much to modify speed of interpolation")
   (persist nil :documentation
            "If t, faces that were changed stay changed"))
+
+(defun huecycle--symbol-value-else-value (element)
+  "Convert symbol to its value if ELEMENT is a symbol.
+Otherwise return value as is."
+  (if (symbolp element) (symbol-value element) element))
 
 (defun huecycle--init-interp-datum (spec-faces-alist &rest rest)
   "Helper function to create an `huecycle--interp-datum'.
@@ -200,7 +205,10 @@ regardless of its color beforehand.
      :next-color-func
      (if next-color-func next-color-func #'huecycle-get-random-hsl-color)
      :color-list
-     (if color-list (mapcar #'huecycle--hex-to-hsl-color color-list) '())
+     (if color-list
+         (mapcar #'huecycle--hex-to-hsl-color
+                 (mapcar #'huecycle--symbol-value-else-value color-list))
+       '())
      :step-multiple
      (if step-multiple step-multiple 1.0)
      :random-color-hue-range
@@ -208,7 +216,7 @@ regardless of its color beforehand.
      :random-color-saturation-range
      (if random-color-saturation-range random-color-saturation-range '(0.5 1.0))
      :random-color-luminance-range
-    (if random-color-luminance-range random-color-luminance-range '(0.2 0.3))
+     (if random-color-luminance-range random-color-luminance-range '(0.2 0.3))
      :persist
      (if persist persist nil))))
 
@@ -324,7 +332,7 @@ LOWER and UPPER should be in range [0.0, 1.0]"
   "Get random color from INTERP-DATUM's color list."
   (let ((color-list (huecycle--interp-datum-color-list interp-datum)))
     (if (= (length (huecycle--interp-datum-color-list interp-datum)) 0)
-       nil
+        nil
       (setf (huecycle--interp-datum-color-list-index interp-datum)
             (random (length color-list)))
       (nth (huecycle--interp-datum-color-list-index interp-datum) color-list))))
@@ -453,7 +461,7 @@ initializing it."
              (spec-faces-alist
               (huecycle--interp-datum-spec-faces-alist interp-datum))
              (default-start-color
-               (huecycle--interp-datum-default-start-color interp-datum))
+              (huecycle--interp-datum-default-start-color interp-datum))
              (start-colors-alist
               (cl-loop for (spec . faces) in spec-faces-alist collect
                        (if default-start-color
@@ -485,9 +493,9 @@ End colors become start colors, and the new end colors are determined by
          (next-colors-alist
           (cl-loop for (spec . faces) in spec-faces-alist
                    collect `(,spec .
-                                   ,(make-list
-                                     (length (cdr (assoc spec end-colors-alist)))
-                                     next-color)))))
+                             ,(make-list
+                               (length (cdr (assoc spec end-colors-alist)))
+                               next-color)))))
     (setf (huecycle--interp-datum-start-colors-alist interp-datum)
           end-colors-alist)
     (setf (huecycle--interp-datum-end-colors-alist interp-datum)
