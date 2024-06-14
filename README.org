@@ -48,3 +48,11 @@ Read the documentation for =huecycle-set-faces= to see all the ways you control 
 You can make Emacs =huecycle= when idle using =M-x huecycle-when-idle=.
 
 You can specify how long Emacs will cycle for with =M-x huecycle-set-cycle-duration=.
+
+* Running the test suite
+Tests are powered using emacs' =ert=.
+
+Go to the file, =huecycle-test.el=, then run the commands:
+- =eval-buffer=
+- =ert=
+To run the test suite.

@@ -417,7 +417,7 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
    :huecycle--interpolate-data
    (mapcar #'huecycle--init-interp-datum '(((foreground . default))))
    :huecycle--max-active-buffers 5)
-(huecycle-with-test-env
+  (huecycle-with-test-env
    (let* ((buffer-1 (get-buffer-create "huecycle-test-buffer-1"))
           (buffer-2 (get-buffer-create "huecycle-test-buffer-2"))
           (buffer-3 (get-buffer-create "huecycle-test-buffer-3"))
@@ -529,10 +529,27 @@ HUECYCLE-ITERATIONS controls how many loop iterations `huecycle' does. If it is
        (kill-buffer buffer-2))
      :huecycle--interpolate-data
      (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
-           `((((foreground . default)) :persist t)))
+             `((((foreground . default)) :persist t)))
      :huecycle-buffers-to-huecycle-in
      (list
       (lambda () buffer-1)
       (lambda () buffer-2)))))
+
+(ert-deftest huecycle-reads-colors-defined-in-symbols ()
+  "Test whether color-list will read the values in previously defined symbols"
+  (let ((test-color-1 "#ffffff")
+        (test-color-2 "#000000"))
+    (huecycle-with-test-env
+     (progn
+       (huecycle)
+       (should (equal test-color-1 (huecycle-get-face-color :foreground 'default))))
+     :huecycle--interpolate-data
+     (mapcar (lambda (args) (apply #'huecycle--init-interp-datum args))
+             `((((foreground . default))
+                :persist t
+                :next-color-func huecycle-get-next-list-color
+                :color-list (test-color-1 test-color-2))))
+     :huecycle-step-size 1
+     :huecycle-iterations 1)))
 
 ;;; test-huecycle.el ends here
