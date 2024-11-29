@@ -505,7 +505,8 @@ End colors become start colors, and the new end colors are determined by
 (defun huecycle ()
   "Start huecycling faces."
   (interactive)
-  (let ((buffer-list (mapcar #'funcall huecycle-buffers-to-huecycle-in)))
+  (let* ((buffer-list-all (mapcar #'funcall huecycle-buffers-to-huecycle-in))
+         (buffer-list (cl-remove-if-not #'buffer-live-p buffer-list-all)))
     (when huecycle--interpolate-data
       (huecycle-mode 1)
       (mapc #'huecycle--setup buffer-list)
